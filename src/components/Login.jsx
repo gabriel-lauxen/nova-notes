@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 export default function Login() {
   const { signIn, signUp } = useAuth()
   const [mode, setMode] = useState('in') // 'in' | 'up'
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
@@ -18,7 +19,7 @@ export default function Login() {
         const { error } = await signIn(email, password)
         if (error) throw error
       } else {
-        const { data, error } = await signUp(email, password)
+        const { data, error } = await signUp(email, password, name.trim())
         if (error) throw error
         if (!data.session) setMsg({ type: 'ok', text: 'Conta criada! Verifique seu e-mail para confirmar (ou desative a confirmação no Supabase).' })
       }
@@ -36,6 +37,9 @@ export default function Login() {
         <div className="auth-title">NOVA</div>
         <div className="auth-sub">{mode === 'in' ? 'Entre na sua conta' : 'Crie sua conta'}</div>
 
+        {mode === 'up' && (
+          <input className="field" type="text" placeholder="Seu nome" value={name} onChange={(e) => setName(e.target.value)} required />
+        )}
         <input className="field" type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />
         <input className="field" type="password" placeholder="Senha" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
 

@@ -4,6 +4,7 @@ import gsap from "gsap";
 import { ArrowRight, Target, CalendarCheck } from "lucide-react";
 import JarvisCore from "../components/JarvisCore";
 import { habitsApi } from "../lib/store";
+import { useAuth } from "../context/AuthContext";
 
 function greeting() {
   const h = new Date().getHours();
@@ -25,6 +26,8 @@ const GALAXY_SPEED = 0.13;
 
 export default function Home({ onNewNote }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const firstName = (user?.user_metadata?.name || user?.email?.split("@")[0] || "").split(" ")[0];
   const overlay = useRef(null);
   const homeRef = useRef(null);
   const orbitRef = useRef(null);
@@ -218,7 +221,7 @@ export default function Home({ onNewNote }) {
       </div>
 
       <div className="home-overlay" ref={overlay}>
-        <div className="home-hello">{greeting()}, Gabriel</div>
+        <div className="home-hello">{greeting()}{firstName ? `, ${firstName}` : ""}</div>
         <h1 className="home-title">NOVA</h1>
         <p className="home-sub">
           Seu segundo cérebro. Capture ideias, organize notas e acompanhe seus

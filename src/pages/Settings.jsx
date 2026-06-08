@@ -1,11 +1,22 @@
+import { useState } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import { FONTS, PRESET_COLORS } from '../theme/palette'
-import { Moon, Sun, LogOut } from 'lucide-react'
+import { Moon, Sun, LogOut, Check } from 'lucide-react'
 
 export default function Settings() {
   const { settings, setColor, setFont, setMode } = useTheme()
-  const { user, signOut } = useAuth()
+  const { user, signOut, updateName } = useAuth()
+  const [name, setName] = useState(user?.user_metadata?.name || '')
+  const [nameStatus, setNameStatus] = useState('idle') // idle | saving | saved
+
+  const saveName = async () => {
+    if (!name.trim() || name.trim() === (user?.user_metadata?.name || '')) return
+    setNameStatus('saving')
+    await updateName(name.trim())
+    setNameStatus('saved')
+    setTimeout(() => setNameStatus('idle'), 1500)
+  }
 
   return (
     <div className="panel" style={{ maxWidth: 720 }}>
@@ -76,7 +87,20 @@ export default function Settings() {
         <div className="settings-row">
           <label>Conta</label>
           <span className="hint">Conectado como <strong>{user.email}</strong></span>
-          <div className="chip-row">
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', maxWidth: 360 }}>
+            <input
+              className="field"
+              value={name}
+              placeholder="Seu nome"
+              onChange={(e) => setName(e.target.value)}
+              onBlur={saveName}
+              onKeyDown={(e) => e.key === 'Enter' && saveName()}
+            />
+            <button className="btn-primary" onClick={saveName} disabled={nameStatus === 'saving'}>
+              {nameStatus === 'saved' ? <Check size={15} /> : 'Salvar'}
+            </button>
+          </div>
+          <div className="chip-row" style={{ marginTop: 12 }}>
             <button className="chip" onClick={() => signOut()}>
               <LogOut size={14} style={{ verticalAlign: 'middle' }} /> Sair
             </button>

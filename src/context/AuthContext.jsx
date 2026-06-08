@@ -25,7 +25,9 @@ export function AuthProvider({ children }) {
     // só exige login quando há Supabase configurado
     needsAuth: isSupabaseConfigured && !user,
     signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
-    signUp: (email, password) => supabase.auth.signUp({ email, password }),
+    signUp: (email, password, name) =>
+      supabase.auth.signUp({ email, password, options: { data: { name } } }),
+    updateName: (name) => supabase.auth.updateUser({ data: { name } }),
     signOut: () => supabase.auth.signOut(),
   }
 
