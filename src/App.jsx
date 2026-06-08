@@ -6,6 +6,8 @@ import MatrixGlitch from './components/MatrixGlitch'
 import Starfield from './components/Starfield'
 import Loader from './components/Loader'
 import CommandPalette from './components/CommandPalette'
+import Login from './components/Login'
+import { useAuth } from './context/AuthContext'
 import Home from './pages/Home'
 import Goals from './pages/Goals'
 import Habits from './pages/Habits'
@@ -18,6 +20,7 @@ export default function App() {
   const [booting, setBooting] = useState(true)
   const [cmdk, setCmdk] = useState(false)
   const [navOpen, setNavOpen] = useState(false)
+  const { loading: authLoading, needsAuth } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -36,8 +39,8 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const refresh = useCallback(() => notesApi.list().then(setNotes), [])
-  useEffect(() => { refresh() }, [refresh])
+  const refresh = useCallback(() => notesApi.list().then(setNotes).catch(() => {}), [])
+  useEffect(() => { if (!needsAuth) refresh() }, [refresh, needsAuth])
 
   // loader inicial
   useEffect(() => {
@@ -61,6 +64,9 @@ export default function App() {
     await refresh()
     if (location.pathname === `/note/${id}`) navigate('/')
   }, [navigate, refresh, location.pathname])
+
+  if (isSupabaseConfigured && authLoading) return <Loader />
+  if (needsAuth) return <Login />
 
   return (
     <div className="app">

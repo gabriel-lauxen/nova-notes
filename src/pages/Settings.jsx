@@ -1,9 +1,11 @@
 import { useTheme } from '../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
 import { FONTS, PRESET_COLORS } from '../theme/palette'
-import { Moon, Sun } from 'lucide-react'
+import { Moon, Sun, LogOut } from 'lucide-react'
 
 export default function Settings() {
   const { settings, setColor, setFont, setMode } = useTheme()
+  const { user, signOut } = useAuth()
 
   return (
     <div className="panel" style={{ maxWidth: 720 }}>
@@ -69,6 +71,18 @@ export default function Settings() {
           </button>
         </div>
       </div>
+
+      {user && (
+        <div className="settings-row">
+          <label>Conta</label>
+          <span className="hint">Conectado como <strong>{user.email}</strong></span>
+          <div className="chip-row">
+            <button className="chip" onClick={() => signOut()}>
+              <LogOut size={14} style={{ verticalAlign: 'middle' }} /> Sair
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

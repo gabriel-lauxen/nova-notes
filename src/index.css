@@ -216,6 +216,31 @@ a:hover {
   font-size: 13px; width: 80px;
 }
 
+/* tela de login */
+.auth {
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  padding: 20px; background: var(--bg);
+}
+.auth-card {
+  width: min(380px, 94vw); display: flex; flex-direction: column; gap: 12px;
+  background: var(--bg-elev); border: 1px solid var(--border-strong);
+  border-radius: 16px; padding: 30px 26px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5), 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.auth-logo {
+  width: 44px; height: 44px; border-radius: 12px; align-self: center;
+  display: grid; place-items: center; font-family: var(--font-mono); font-weight: 700; font-size: 22px;
+  background: linear-gradient(140deg, var(--accent), var(--accent-strong));
+  color: var(--accent-contrast); box-shadow: 0 4px 16px var(--accent-glow);
+}
+.auth-title { text-align: center; font-weight: 700; font-size: 22px; letter-spacing: 3px; }
+.auth-sub { text-align: center; color: var(--text-dim); font-size: 13.5px; margin-bottom: 8px; }
+.auth-msg { font-size: 13px; padding: 9px 12px; border-radius: var(--radius-sm); }
+.auth-msg.err { background: color-mix(in srgb, #ef4444 18%, transparent); color: #fca5a5; }
+.auth-msg.ok { background: var(--accent-soft); color: var(--accent-strong); }
+.auth-toggle { color: var(--text-dim); font-size: 13px; margin-top: 4px; }
+.auth-toggle:hover { color: var(--accent); }
+
 /* loader inicial */
 .loader {
   position: fixed;
