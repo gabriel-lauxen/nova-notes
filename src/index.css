@@ -27,11 +27,14 @@ body {
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   transition:
     background 0.4s ease,
     color 0.4s ease;
   overflow: hidden;
 }
+html, body { max-width: 100%; overflow-x: hidden; }
 
 ::-webkit-scrollbar {
   width: 10px;
@@ -1425,8 +1428,10 @@ tbody .habit-name-col {
 }
 
 /* ícone de atividades orbitando + mini-menu neon */
-.orbit-backdrop { position: absolute; inset: 0; z-index: 6; }
-.habit-orbit { position: absolute; top: 0; left: 0; z-index: 7; transform-origin: top right; }
+.orbit-backdrop { position: absolute; inset: 0; z-index: 60; }
+/* fechado: orbita entre o subtítulo (atrás) e o "boa noite"/título (na frente) */
+.habit-orbit { position: absolute; top: 0; left: 0; z-index: 5; transform-origin: top right; }
+.habit-orbit.open { z-index: 70; }
 .orbit-icon {
   position: relative;
   display: flex; align-items: center; justify-content: center;
@@ -1492,9 +1497,10 @@ tbody .habit-name-col {
   position: relative;
   text-shadow: 0 2px 26px var(--bg);
 }
-.home-title {
-  color: var(--text);
-}
+/* profundidade: subtítulo atrás do ícone, "boa noite"/título na frente */
+.home-sub { z-index: 1; }
+.home-hello { z-index: 12; }
+.home-title { color: var(--text); z-index: 10; }
 
 /* ---------- menu de barra "/" ---------- */
 .slash-popup {
@@ -1764,9 +1770,26 @@ tbody .habit-name-col {
     -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
     animation: fade-in 0.2s ease both;
   }
-  .panel { padding: 64px 20px 24px; }
-  .editor-head { padding: 14px 16px 14px 60px; }
+  .panel { padding: 64px 20px 24px; overflow-x: hidden; }
+
+  /* header da nota: quebra em vez de estourar a tela */
+  .editor-page { overflow-x: hidden; }
+  .editor-head {
+    flex-wrap: wrap; gap: 6px; padding: 12px 6px 12px 66px;
+    position: static;
+  }
+  .editor-head .spacer { display: block; flex: 1; }
+  .editor-head .goal-toggle { font-size: 12px; padding: 6px 10px; }
+  .head-progress { min-width: 0; margin-left: 0; }
+  .head-progress .range { width: 90px; }
+  .save-tag { margin-left: 0; }
   .editor-body { padding: 24px 18px 120px; }
+  .editor-body .title-input { font-size: 30px; }
+
   .home-clock { top: 18px; right: 18px; }
+  .home-sub { padding-left: 26px; padding-right: 26px; }
   .metrics { grid-template-columns: 1fr; }
+
+  /* evita o zoom automático do iOS ao focar inputs (<16px) */
+  .field, .tag-input, .cmdk-input input, .emoji-input, input, textarea, select { font-size: 16px; }
 }

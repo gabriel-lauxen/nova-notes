@@ -99,7 +99,8 @@ export default function Home({ onNewNote }) {
     return {
       x: cx + rx * scale - 24,
       y: cy + y2 * scale - 24,
-      scale: 0.7 + scale * 0.3,
+      // mais profundidade: encolhe bem na parte de trás, cresce na frente
+      scale: 0.27 + scale * 0.63,
     };
   };
 
