@@ -36,7 +36,8 @@ function Corner({ pos }) {
   const cols = useMemo(() => {
     const n = Math.floor(WIDTH / SLOT) + 1
     // grade com bastante jitter: gera sobreposições e alguns espaços em branco
-    return Array.from({ length: n }, (_, i) => ({ x: Math.round(i * SLOT + rand(-8, 8)), off: Math.round(rand(-35, 60)) }))
+    // off enviesado pra borda (cobre a borda; a variação fica no comprimento)
+    return Array.from({ length: n }, (_, i) => ({ x: Math.round(i * SLOT + rand(-8, 8)), off: Math.round(rand(-45, 6)) }))
   }, [])
   return (
     <div className={'matrix-rain ' + pos} aria-hidden="true">
