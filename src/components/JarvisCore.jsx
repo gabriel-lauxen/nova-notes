@@ -239,6 +239,9 @@ export default function JarvisCore() {
     // escuta no window pra o efeito continuar mesmo sobre botões/menus por cima
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerleave", onLeave);
+    // toque: solta as partículas quando o dedo levanta
+    window.addEventListener("pointerup", onLeave);
+    window.addEventListener("pointercancel", onLeave);
     window.addEventListener("resize", resize);
 
     resize();

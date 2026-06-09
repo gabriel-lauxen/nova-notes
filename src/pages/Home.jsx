@@ -136,17 +136,17 @@ export default function Home({ onNewNote }) {
 
   const openMenu = () => {
     stopOrbit();
-    setOpen(true);
     const el = orbitRef.current;
-    const W = homeRef.current.clientWidth;
-    const sat = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--sat")) || 0;
-    gsap.to(el, {
-      x: W - 216,
-      y: sat + 10,
-      scale: 1,
-      opacity: 1,
-      duration: 0.55,
-      ease: "power3.out",
+    setOpen(true); // renderiza o menu (o ícone "morfa" nele durante o voo)
+    requestAnimationFrame(() => {
+      const parent = el.offsetParent || homeRef.current;
+      const pr = parent.getBoundingClientRect();
+      const menuW = el.offsetWidth || 196;
+      const burger = document.querySelector(".burger");
+      const topY = burger && burger.getClientRects().length ? burger.getBoundingClientRect().top : 16;
+      const tx = window.innerWidth - menuW - 16 - pr.left;
+      const ty = topY - pr.top;
+      gsap.to(el, { x: tx, y: ty, scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" });
     });
   };
 
@@ -154,23 +154,15 @@ export default function Home({ onNewNote }) {
     const el = orbitRef.current;
     // encolhe (menu vira ícone) e volta voando pra órbita
     gsap.to(el, {
-      scale: 0.4,
+      scale: 0.5,
       opacity: 0.5,
-      duration: 0.18,
+      duration: 0.15,
       ease: "power2.in",
       onComplete: () => {
         setOpen(false);
         requestAnimationFrame(() => {
           const p = computePos();
-          gsap.to(el, {
-            x: p.x,
-            y: p.y,
-            scale: p.scale,
-            opacity: 1,
-            duration: 0.5,
-            ease: "power3.out",
-            onComplete: startOrbit,
-          });
+          gsap.to(el, { x: p.x, y: p.y, scale: p.scale, opacity: 1, duration: 0.45, ease: "power3.out", onComplete: startOrbit });
         });
       },
     });

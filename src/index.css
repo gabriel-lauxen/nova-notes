@@ -1673,6 +1673,15 @@ tbody .habit-name-col {
   min-height: 0;
   width: 100%;
   overflow: hidden;
+  /* no toque: arrastar o dedo move as partículas, sem rolar nem selecionar texto */
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+/* mas permite rolar a lista de hábitos do menu */
+.orbit-habits {
+  touch-action: pan-y;
 }
 .home canvas {
   position: absolute;
