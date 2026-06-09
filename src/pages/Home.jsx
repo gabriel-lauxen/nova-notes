@@ -139,9 +139,10 @@ export default function Home({ onNewNote }) {
     setOpen(true);
     const el = orbitRef.current;
     const W = homeRef.current.clientWidth;
+    const sat = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--sat")) || 0;
     gsap.to(el, {
       x: W - 216,
-      y: 22,
+      y: sat + 20,
       scale: 1,
       opacity: 1,
       duration: 0.55,

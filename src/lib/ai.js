@@ -18,6 +18,8 @@ export function setGeminiKey(k) {
   try { k ? localStorage.setItem(KEY_STORAGE, k) : localStorage.removeItem(KEY_STORAGE) } catch {}
 }
 
+const QUOTA_MSG = 'Limite de uso da IA atingido por enquanto. O plano grátis do Gemini reseta por minuto e por dia — tente de novo em alguns minutos.'
+
 function extract(data) {
   return (data.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim()
 }
@@ -60,7 +62,10 @@ export async function generateText(prompt) {
       },
     )
     const data = await r.json().catch(() => ({}))
-    if (!r.ok) throw new Error(data?.error?.message || 'Erro na API do Gemini (verifique sua chave).')
+    if (!r.ok) {
+      if (r.status === 429) throw new Error(QUOTA_MSG)
+      throw new Error(data?.error?.message || 'Erro na API do Gemini (verifique sua chave).')
+    }
     return extract(data)
   }
 
@@ -80,6 +85,9 @@ export async function generateText(prompt) {
     throw new Error('Configure sua chave do Gemini em Configurações.')
   }
   const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Falha ao gerar texto.')
+  if (!res.ok) {
+    if (res.status === 429) throw new Error(QUOTA_MSG)
+    throw new Error(data.error || 'Falha ao gerar texto.')
+  }
   return data.text || ''
 }

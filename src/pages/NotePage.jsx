@@ -193,6 +193,13 @@ export default function NotePage({ onChanged, onDeleted }) {
     });
   const focusBody = () => editorRef.current?.commands.focus("start");
 
+  // some o balão de erro sozinho depois de alguns segundos
+  useEffect(() => {
+    if (!aiError) return;
+    const t = setTimeout(() => setAiError(null), 6000);
+    return () => clearTimeout(t);
+  }, [aiError]);
+
   // sincroniza o título (carregar nota / título gerado pela IA) sem mover o cursor
   useEffect(() => {
     const el = titleRef.current;
@@ -377,7 +384,8 @@ export default function NotePage({ onChanged, onDeleted }) {
           )}
           {aiError && (
             <div className="ai-error" style={{ top: aiPos.top, left: aiPos.left }}>
-              {aiError} <button onClick={() => setAiError(null)}>×</button>
+              <span className="ai-error-msg">{aiError}</span>
+              <button onClick={() => setAiError(null)}>×</button>
             </div>
           )}
           <Editor
