@@ -21,6 +21,10 @@ body,
 #root {
   height: 100%;
 }
+/* iOS Safari: preenche a altura visível real (sem a faixa do 100vh) */
+html {
+  height: -webkit-fill-available;
+}
 
 body {
   font-family: var(--font-ui);
@@ -80,7 +84,7 @@ a:hover {
   display: grid;
   grid-template-columns: var(--sidebar-w) 1fr;
   height: 100vh;
-  height: 100dvh; /* viewport dinâmico (cobre todo o PWA no iOS) */
+  height: -webkit-fill-available;
   overflow: hidden;
 }
 
@@ -88,7 +92,7 @@ a:hover {
   position: relative;
   overflow: hidden;
   height: 100vh;
-  height: 100dvh;
+  height: -webkit-fill-available;
   display: flex;
   flex-direction: column;
 }
