@@ -27,6 +27,34 @@ export default function App() {
   // fecha o menu mobile ao trocar de página
   useEffect(() => { setNavOpen(false) }, [location.pathname])
 
+  // gesto: swipe rápido pra direita a partir da borda esquerda abre o drawer (mobile)
+  useEffect(() => {
+    if (window.innerWidth > 760) return
+    let sx = 0, sy = 0, st = 0, tracking = false
+    const onStart = (e) => {
+      const t = e.touches[0]
+      // só começa se o toque iniciar bem na borda esquerda
+      tracking = t.clientX <= 28
+      sx = t.clientX; sy = t.clientY; st = Date.now()
+    }
+    const onEnd = (e) => {
+      if (!tracking) return
+      tracking = false
+      const t = e.changedTouches[0]
+      const dx = t.clientX - sx
+      const dy = t.clientY - sy
+      const dt = Date.now() - st
+      // rápido, pra direita, predominantemente horizontal
+      if (dx > 60 && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 500) setNavOpen(true)
+    }
+    window.addEventListener('touchstart', onStart, { passive: true })
+    window.addEventListener('touchend', onEnd, { passive: true })
+    return () => {
+      window.removeEventListener('touchstart', onStart)
+      window.removeEventListener('touchend', onEnd)
+    }
+  }, [])
+
   // atalho Ctrl/Cmd+K
   useEffect(() => {
     const onKey = (e) => {
