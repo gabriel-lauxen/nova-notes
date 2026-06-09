@@ -1832,7 +1832,7 @@ tbody .habit-name-col {
   top: 0;
   left: 0;
   z-index: 5;
-  transform-origin: top right;
+  transform-origin: top left;
 }
 .habit-orbit.open {
   z-index: 70;
