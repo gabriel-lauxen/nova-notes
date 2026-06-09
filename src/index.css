@@ -165,8 +165,20 @@ a:hover {
   color: var(--text-faint);
   margin-bottom: 6px;
 }
-.ai-check { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 13.5px; color: var(--text-dim); cursor: pointer; }
-.ai-check input { accent-color: var(--accent); width: 16px; height: 16px; }
+.ai-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 13.5px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.ai-check input {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+}
 .modal-actions {
   display: flex;
   justify-content: flex-end;
@@ -294,21 +306,48 @@ a:hover {
 
 /* "Gerando…" da IA — parece o texto do corpo, com loader discreto */
 .ai-generating {
-  position: absolute; z-index: 5;
-  display: flex; align-items: center; gap: 8px;
-  background: var(--bg); padding: 2px 8px 2px 0; border-radius: 6px;
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  padding: 2px 8px 2px 0;
+  border-radius: 6px;
 }
 /* loader holográfico: anel com rastro em conic-gradient + glow */
 .ai-generating .ai-loader {
-  width: 18px; height: 18px; margin-top: 5px; flex-shrink: 0; border-radius: 50%;
-  background: conic-gradient(from 0deg, transparent 0%, var(--accent) 92%, transparent 100%);
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2.5px));
-  mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2.5px));
+  width: 18px;
+  height: 18px;
+  margin-top: 5px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    var(--accent) 92%,
+    transparent 100%
+  );
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 2.5px),
+    #000 calc(100% - 2.5px)
+  );
+  mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 2.5px),
+    #000 calc(100% - 2.5px)
+  );
   animation: spin 0.95s linear infinite;
 }
-:root[data-mode='dark'] .ai-generating .ai-loader { filter: drop-shadow(0 0 5px var(--accent-glow)); }
+:root[data-mode="dark"] .ai-generating .ai-loader {
+  filter: drop-shadow(0 0 5px var(--accent-glow));
+}
 .ai-generating-text {
-  font-family: var(--font-ui); font-size: 16.5px; line-height: 1.7; font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: 16.5px;
+  line-height: 1.7;
+  font-weight: 600;
   /* brilho passando sobre o texto */
   background: linear-gradient(
     100deg,
@@ -317,27 +356,68 @@ a:hover {
     var(--accent) 62%
   );
   background-size: 220% 100%;
-  -webkit-background-clip: text; background-clip: text;
+  -webkit-background-clip: text;
+  background-clip: text;
   color: transparent;
   animation: ai-shine 2.2s linear infinite;
 }
-:root[data-mode='dark'] .ai-generating-text {
+:root[data-mode="dark"] .ai-generating-text {
   text-shadow: 0 0 8px var(--accent-glow);
 }
-@keyframes ai-shine { from { background-position: 200% 0; } to { background-position: -200% 0; } }
-/* esconde o placeholder do editor enquanto a IA gera */
-.generating .ProseMirror p.is-editor-empty:first-child::before { content: none; }
-@keyframes loader-dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
-.ai-error {
-  position: absolute; z-index: 6; max-width: min(92%, 360px);
-  background: color-mix(in srgb, #ef4444 22%, var(--bg)); color: #fca5a5;
-  border: 1px solid color-mix(in srgb, #ef4444 40%, transparent); border-radius: var(--radius-sm);
-  padding: 10px 12px; font-size: 13px;
-  display: flex; align-items: flex-start; gap: 10px;
+@keyframes ai-shine {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
 }
-.ai-error-msg { flex: 1; min-width: 0; word-break: break-word; line-height: 1.4; }
-.ai-error button { flex-shrink: 0; }
-.ai-error button { color: #fca5a5; font-size: 18px; line-height: 1; }
+/* esconde o placeholder do editor enquanto a IA gera */
+.generating .ProseMirror p.is-editor-empty:first-child::before {
+  content: none;
+}
+@keyframes loader-dots {
+  0% {
+    content: "";
+  }
+  25% {
+    content: ".";
+  }
+  50% {
+    content: "..";
+  }
+  75% {
+    content: "...";
+  }
+}
+.ai-error {
+  position: absolute;
+  z-index: 6;
+  max-width: min(92%, 360px);
+  background: color-mix(in srgb, #ef4444 22%, var(--bg));
+  color: #fca5a5;
+  border: 1px solid color-mix(in srgb, #ef4444 40%, transparent);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 13px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.ai-error-msg {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+  line-height: 1.4;
+}
+.ai-error button {
+  flex-shrink: 0;
+}
+.ai-error button {
+  color: #fca5a5;
+  font-size: 18px;
+  line-height: 1;
+}
 
 /* seletor de emoji */
 .emoji-wrap {
@@ -590,7 +670,7 @@ a:hover {
   display: none;
   position: fixed;
   /* respeita o notch / safe area do iPhone */
-  top: calc(env(safe-area-inset-top, 0px) + 10px);
+  top: calc(env(safe-area-inset-top, 0px) + 5px);
   left: calc(env(safe-area-inset-left, 0px) + 12px);
   z-index: 150;
   width: 48px;
@@ -602,8 +682,9 @@ a:hover {
   background: transparent;
 }
 /* glow neon só no ícone, apenas no modo escuro (no claro fica feio) */
-:root[data-mode='dark'] .burger svg {
-  filter: drop-shadow(0 0 6px var(--accent-glow)) drop-shadow(0 0 2px var(--accent));
+:root[data-mode="dark"] .burger svg {
+  filter: drop-shadow(0 0 4px var(--accent-glow))
+    drop-shadow(0 0 1px var(--accent));
 }
 .nav-backdrop {
   display: none;
@@ -2180,7 +2261,7 @@ tbody .habit-name-col {
     padding-left: calc(env(safe-area-inset-left, 0px) + 12px);
   }
   /* no modo claro: opacidade um pouco reduzida, mas legível sobre o backdrop */
-  :root[data-mode='light'] .sidebar {
+  :root[data-mode="light"] .sidebar {
     background-color: color-mix(in srgb, var(--bg-elev) 78%, transparent);
     -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
@@ -2200,7 +2281,8 @@ tbody .habit-name-col {
     animation: fade-in 0.2s ease both;
   }
   .panel {
-    padding: calc(env(safe-area-inset-top, 0px) + 64px) 20px calc(env(safe-area-inset-bottom, 0px) + 100px);
+    padding: calc(env(safe-area-inset-top, 0px) + 64px) 20px
+      calc(env(safe-area-inset-bottom, 0px) + 100px);
     overflow-x: hidden;
   }
 
