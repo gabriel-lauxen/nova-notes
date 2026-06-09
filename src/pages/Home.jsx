@@ -142,7 +142,7 @@ export default function Home({ onNewNote }) {
     const sat = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--sat")) || 0;
     gsap.to(el, {
       x: W - 216,
-      y: sat + 20,
+      y: sat + 10,
       scale: 1,
       opacity: 1,
       duration: 0.55,
