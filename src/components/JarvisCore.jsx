@@ -227,19 +227,43 @@ export default function JarvisCore() {
     };
 
     const mouse = { x: -9999, y: -9999 };
-    const onMove = (e) => {
+    let dragging = false;
+    let lastX = 0;
+    let lastY = 0;
+    let userRot = 0; // rotação manual (arrasto horizontal)
+    let userTilt = 0; // inclinação manual (arrasto vertical)
+
+    // arrastar o dedo/mouse na cena gira a galáxia (e inclina no vertical)
+    const onDown = (e) => {
+      dragging = true;
+      lastX = e.clientX;
+      lastY = e.clientY;
       const rect = canvas.getBoundingClientRect();
       mouse.x = e.clientX - rect.left;
       mouse.y = e.clientY - rect.top;
     };
+    const onMove = (e) => {
+      // sempre repele perto do cursor/dedo
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = e.clientX - rect.left;
+      mouse.y = e.clientY - rect.top;
+      // e, se estiver arrastando, também gira/inclina a cena
+      if (dragging) {
+        userRot += (e.clientX - lastX) * 0.006;
+        userTilt = Math.max(-0.5, Math.min(1.45, userTilt + (e.clientY - lastY) * 0.004));
+        lastX = e.clientX;
+        lastY = e.clientY;
+      }
+    };
     const onLeave = () => {
+      dragging = false;
       mouse.x = -9999;
       mouse.y = -9999;
     };
-    // escuta no window pra o efeito continuar mesmo sobre botões/menus por cima
+    // pointerdown só na cena (não nos botões); move/up no window pra seguir o dedo
+    canvas.addEventListener("pointerdown", onDown);
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerleave", onLeave);
-    // toque: solta as partículas quando o dedo levanta
     window.addEventListener("pointerup", onLeave);
     window.addEventListener("pointercancel", onLeave);
     window.addEventListener("resize", resize);
@@ -254,13 +278,14 @@ export default function JarvisCore() {
 
     let raf,
       t = 0;
-    const cosI = Math.cos(INCL),
-      sinI = Math.sin(INCL);
     const cosR = Math.cos(ROLL),
       sinR = Math.sin(ROLL);
     const render = () => {
-      t += 0.016;
+      if (!dragging) t += 0.016; // pausa o giro automático enquanto o dedo controla
       ctx.clearRect(0, 0, W, H);
+      // inclinação = base + ajuste manual (arrasto vertical)
+      const cosI = Math.cos(INCL + userTilt);
+      const sinI = Math.sin(INCL + userTilt);
 
       const { color, mode } = themeRef.current;
       const { h, s } = hexToHsl(color);
@@ -287,9 +312,10 @@ export default function JarvisCore() {
 
         // rotação em torno do eixo Y (eixo do disco)
         const rad = Math.hypot(p.bx, p.bz);
-        const spin = scene.diff
-          ? (scene.speed * t) / Math.max(0.4, rad / (maxR * 0.5))
-          : scene.speed * t;
+        const spin =
+          (scene.diff
+            ? (scene.speed * t) / Math.max(0.4, rad / (maxR * 0.5))
+            : scene.speed * t) + userRot;
         const cs = Math.cos(spin),
           sn = Math.sin(spin);
         const rx = p.bx * cs + p.bz * sn;
@@ -347,8 +373,11 @@ export default function JarvisCore() {
       cancelAnimationFrame(raf);
       clearInterval(swap);
       window.removeEventListener("resize", resize);
+      canvas.removeEventListener("pointerdown", onDown);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerleave", onLeave);
+      window.removeEventListener("pointerup", onLeave);
+      window.removeEventListener("pointercancel", onLeave);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
