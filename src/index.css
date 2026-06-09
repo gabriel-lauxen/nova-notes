@@ -2174,7 +2174,9 @@ tbody .habit-name-col {
     gap: 0;
   }
   /* marcar objetivo + upload/download/excluir viram um menu ⋮ */
-  .editor-head .goal-toggle { display: none; }
+  .editor-head .goal-toggle {
+    display: none;
+  }
   .head-full {
     display: none;
   }
@@ -2208,6 +2210,7 @@ tbody .habit-name-col {
   .home-sub {
     padding-left: 26px;
     padding-right: 26px;
+    text-shadow: 1px 1px 2px rgb(0, 0, 0);
   }
   .home-actions {
     bottom: 10vh;
