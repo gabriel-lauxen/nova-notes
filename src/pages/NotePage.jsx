@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Download, Upload, Trash2, Check, Loader2, Target } from 'lucide-react'
+import { Download, Upload, Trash2, Check, Loader2, Target, MoreVertical } from 'lucide-react'
 import Editor from '../components/Editor'
 import LinkDialog from '../components/LinkDialog'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -31,6 +31,7 @@ export default function NotePage({ onChanged, onDeleted }) {
   const [linkOpen, setLinkOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [emojiOpen, setEmojiOpen] = useState(false)
+  const [headMenu, setHeadMenu] = useState(false)
   const saveTimer = useRef(null)
   const fileInput = useRef(null)
   const editorRef = useRef(null)
@@ -149,9 +150,23 @@ export default function NotePage({ onChanged, onDeleted }) {
         {status === 'saving' && <span className="save-tag"><Loader2 size={14} className="spin" /> salvando…</span>}
         {status === 'saved' && <span className="save-tag" style={{ color: 'var(--accent)' }}><Check size={14} /> salvo</span>}
         <div className="spacer" />
-        <button className="icon-btn" title="Importar .md" onClick={() => fileInput.current?.click()}><Upload size={18} /></button>
-        <button className="icon-btn" title="Exportar .md" onClick={exportMd}><Download size={18} /></button>
-        <button className="icon-btn" title="Excluir" onClick={() => setConfirmOpen(true)}><Trash2 size={18} /></button>
+        <div className="head-actions">
+          <button className="icon-btn head-full" title="Importar .md" onClick={() => fileInput.current?.click()}><Upload size={18} /></button>
+          <button className="icon-btn head-full" title="Exportar .md" onClick={exportMd}><Download size={18} /></button>
+          <button className="icon-btn head-full" title="Excluir" onClick={() => setConfirmOpen(true)}><Trash2 size={18} /></button>
+
+          <button className="icon-btn head-more" title="Mais" onClick={() => setHeadMenu((o) => !o)}><MoreVertical size={18} /></button>
+          {headMenu && (
+            <>
+              <div className="menu-backdrop" onClick={() => setHeadMenu(false)} />
+              <div className="card-menu">
+                <button onClick={() => { setHeadMenu(false); fileInput.current?.click() }}><Upload size={14} /> Importar .md</button>
+                <button onClick={() => { setHeadMenu(false); exportMd() }}><Download size={14} /> Exportar .md</button>
+                <button className="danger" onClick={() => { setHeadMenu(false); setConfirmOpen(true) }}><Trash2 size={14} /> Excluir</button>
+              </div>
+            </>
+          )}
+        </div>
         <input ref={fileInput} type="file" accept=".md,text/markdown" hidden onChange={importMd} />
       </div>
 

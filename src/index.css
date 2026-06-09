@@ -1591,6 +1591,8 @@ tbody .habit-name-col {
   color: var(--text-faint);
   margin-left: 12px;
 }
+.head-actions { position: relative; display: flex; gap: 2px; }
+.head-more { display: none; }
 .icon-btn.sm {
   width: 26px;
   height: 26px;
@@ -1782,14 +1784,25 @@ tbody .habit-name-col {
   .editor-head .goal-toggle { font-size: 12px; padding: 6px 10px; }
   .head-progress { min-width: 0; margin-left: 0; }
   .head-progress .range { width: 90px; }
-  .save-tag { margin-left: 0; }
+  /* indicador de salvamento só com ícone (não quebra o header) */
+  .save-tag { margin-left: 4px; font-size: 0; gap: 0; }
+  /* upload/download/excluir viram um menu ⋮ */
+  .head-full { display: none; }
+  .head-more { display: inline-flex; }
   .editor-body { padding: 24px 18px 120px; }
   .editor-body .title-input { font-size: 30px; }
+  /* emoji quadrado, alinhado à esquerda */
+  .emoji-wrap { display: block; }
+  .emoji-input {
+    width: 52px; height: 52px; font-size: 38px; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
 
   .home-clock { top: 18px; right: 18px; }
   .home-sub { padding-left: 26px; padding-right: 26px; }
+  .home-actions { bottom: 16vh; }
   .metrics { grid-template-columns: 1fr; }
 
   /* evita o zoom automático do iOS ao focar inputs (<16px) */
-  .field, .tag-input, .cmdk-input input, .emoji-input, input, textarea, select { font-size: 16px; }
+  .field, .tag-input, .cmdk-input input, input, textarea, select { font-size: 16px; }
 }
