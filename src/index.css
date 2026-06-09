@@ -1023,6 +1023,11 @@ a:hover {
 /* cantos de baixo: fluxo sobe (cabeça/parte maior pra baixo, ponta menor pra cima) */
 
 /* ---------- hábitos ---------- */
+.habits-head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 12px; flex-wrap: wrap;
+}
+.habits-actions { display: flex; align-items: center; gap: 12px; }
 .month-nav {
   display: flex;
   align-items: center;
@@ -1772,7 +1777,13 @@ tbody .habit-name-col {
     -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
     animation: fade-in 0.2s ease both;
   }
-  .panel { padding: 64px 20px 24px; overflow-x: hidden; }
+  .panel { padding: 64px 20px 120px; overflow-x: hidden; }
+
+  /* sobe título/subtítulo (centro do texto) e o header de hábitos full-width */
+  .home-overlay { padding-bottom: 22vh; }
+  .habits-actions { width: 100%; justify-content: space-between; }
+  .habits-actions .btn-primary { white-space: nowrap; }
+  .month-nav span { min-width: 0; }
 
   /* header da nota: quebra em vez de estourar a tela */
   .editor-page { overflow-x: hidden; }

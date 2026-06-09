@@ -141,12 +141,12 @@ export default function Habits() {
 
   return (
     <div className="panel">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+      <div className="habits-head">
         <div>
-          <div className="panel-title">Hábitos & Rotinas</div>
-          <div className="panel-sub">Marque cada dia. Arraste pelo ⠿ para reordenar. Clique no nome vinculado para abrir a nota.</div>
+          <div className="panel-title">Hábitos</div>
+          <div className="panel-sub">Acompanhe seus hábitos do mês.</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="habits-actions">
           <div className="month-nav">
             <button className="icon-btn" onClick={() => move(-1)}><ChevronLeft size={18} /></button>
             <span>{MONTHS[ref.m]} {ref.y}</span>

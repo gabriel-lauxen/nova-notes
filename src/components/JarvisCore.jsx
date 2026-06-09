@@ -263,7 +263,8 @@ export default function JarvisCore() {
       const { h, s } = hexToHsl(color);
       const sat = Math.min(95, Math.max(45, s));
       const cx = W / 2,
-        cy = H / 2 - 20;
+        // no mobile sobe o centro da cena junto com o texto/órbita
+        cy = H / 2 - 20 - (W <= 760 ? H * 0.11 : 0);
       const scene = SCENES[sceneIndex];
       const focal = maxR * 2.4;
 
