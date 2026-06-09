@@ -2163,6 +2163,9 @@ tbody .habit-name-col {
     transform: translateX(-100%);
     transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
     z-index: 210;
+    /* respeita o notch / safe area */
+    padding-top: calc(env(safe-area-inset-top, 0px) + 16px);
+    padding-left: calc(env(safe-area-inset-left, 0px) + 12px);
   }
   /* no modo claro: opacidade um pouco reduzida, mas legível sobre o backdrop */
   :root[data-mode='light'] .sidebar {
@@ -2185,7 +2188,7 @@ tbody .habit-name-col {
     animation: fade-in 0.2s ease both;
   }
   .panel {
-    padding: 64px 20px 120px;
+    padding: calc(env(safe-area-inset-top, 0px) + 64px) 20px calc(env(safe-area-inset-bottom, 0px) + 100px);
     overflow-x: hidden;
   }
 
@@ -2211,7 +2214,7 @@ tbody .habit-name-col {
   .editor-head {
     flex-wrap: wrap;
     gap: 6px;
-    padding: 12px 6px 12px 66px;
+    padding: calc(env(safe-area-inset-top, 0px) + 12px) 6px 12px 66px;
     position: static;
   }
   .editor-head .spacer {
@@ -2266,7 +2269,7 @@ tbody .habit-name-col {
   }
 
   .home-clock {
-    top: 18px;
+    top: calc(env(safe-area-inset-top, 0px) + 16px);
     right: 18px;
   }
   .home-sub {
