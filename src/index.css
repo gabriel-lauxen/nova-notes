@@ -80,6 +80,7 @@ a:hover {
   display: grid;
   grid-template-columns: var(--sidebar-w) 1fr;
   height: 100vh;
+  height: 100dvh; /* viewport dinâmico (cobre todo o PWA no iOS) */
   overflow: hidden;
 }
 
@@ -87,6 +88,7 @@ a:hover {
   position: relative;
   overflow: hidden;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
 }
