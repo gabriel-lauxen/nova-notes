@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Download, Upload, Trash2, Check, Loader2, Target, MoreVertical } from 'lucide-react'
 import Editor from '../components/Editor'
@@ -31,7 +32,12 @@ export default function NotePage({ onChanged, onDeleted }) {
   const [linkOpen, setLinkOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [emojiOpen, setEmojiOpen] = useState(false)
-  const [headMenu, setHeadMenu] = useState(false)
+  const [headMenu, setHeadMenu] = useState(null) // null | { x, y }
+
+  const openHeadMenu = (e) => {
+    const r = e.currentTarget.getBoundingClientRect()
+    setHeadMenu({ x: Math.max(8, r.right - 210), y: r.bottom + 4 })
+  }
   const saveTimer = useRef(null)
   const fileInput = useRef(null)
   const editorRef = useRef(null)
@@ -155,17 +161,7 @@ export default function NotePage({ onChanged, onDeleted }) {
           <button className="icon-btn head-full" title="Exportar .md" onClick={exportMd}><Download size={18} /></button>
           <button className="icon-btn head-full" title="Excluir" onClick={() => setConfirmOpen(true)}><Trash2 size={18} /></button>
 
-          <button className="icon-btn head-more" title="Mais" onClick={() => setHeadMenu((o) => !o)}><MoreVertical size={18} /></button>
-          {headMenu && (
-            <>
-              <div className="menu-backdrop" onClick={() => setHeadMenu(false)} />
-              <div className="card-menu">
-                <button onClick={() => { setHeadMenu(false); fileInput.current?.click() }}><Upload size={14} /> Importar .md</button>
-                <button onClick={() => { setHeadMenu(false); exportMd() }}><Download size={14} /> Exportar .md</button>
-                <button className="danger" onClick={() => { setHeadMenu(false); setConfirmOpen(true) }}><Trash2 size={14} /> Excluir</button>
-              </div>
-            </>
-          )}
+          <button className="icon-btn head-more" title="Mais" onClick={openHeadMenu}><MoreVertical size={18} /></button>
         </div>
         <input ref={fileInput} type="file" accept=".md,text/markdown" hidden onChange={importMd} />
       </div>
@@ -217,6 +213,21 @@ export default function NotePage({ onChanged, onDeleted }) {
           <Editor content={note.content} onChange={handleContent} onEditor={(ed) => (editorRef.current = ed)} />
         </div>
       </div>
+
+      {headMenu && createPortal(
+        <>
+          <div className="menu-backdrop" onClick={() => setHeadMenu(null)} />
+          <div className="card-menu" style={{ position: 'fixed', top: headMenu.y, left: headMenu.x, right: 'auto', zIndex: 120 }}>
+            <button onClick={() => { setHeadMenu(null); toggleGoal() }}>
+              <Target size={14} /> Objetivo {note.is_goal && <Check size={13} style={{ marginLeft: 'auto', color: 'var(--accent)' }} />}
+            </button>
+            <button onClick={() => { setHeadMenu(null); fileInput.current?.click() }}><Upload size={14} /> Importar .md</button>
+            <button onClick={() => { setHeadMenu(null); exportMd() }}><Download size={14} /> Exportar .md</button>
+            <button className="danger" onClick={() => { setHeadMenu(null); setConfirmOpen(true) }}><Trash2 size={14} /> Excluir</button>
+          </div>
+        </>,
+        document.body,
+      )}
 
       {linkOpen && <LinkDialog notes={allNotes} onConfirm={insertLink} onCancel={() => setLinkOpen(false)} />}
       {confirmOpen && (

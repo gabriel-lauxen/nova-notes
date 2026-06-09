@@ -2173,7 +2173,8 @@ tbody .habit-name-col {
     font-size: 0;
     gap: 0;
   }
-  /* upload/download/excluir viram um menu ⋮ */
+  /* marcar objetivo + upload/download/excluir viram um menu ⋮ */
+  .editor-head .goal-toggle { display: none; }
   .head-full {
     display: none;
   }
