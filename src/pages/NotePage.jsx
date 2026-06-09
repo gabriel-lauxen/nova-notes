@@ -14,7 +14,17 @@ import Editor from "../components/Editor";
 import LinkDialog from "../components/LinkDialog";
 import ConfirmDialog from "../components/ConfirmDialog";
 import EmojiPicker from "../components/EmojiPicker";
+import AIDialog from "../components/AIDialog";
+import { RingLoader } from "react-spinners";
+import { marked } from "marked";
+import { generateNote } from "../lib/ai";
 import { notesApi } from "../lib/store";
+
+// cor primária atual (para o spinner)
+function accentColor() {
+  if (typeof window === "undefined") return "#a855f7";
+  return getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#a855f7";
+}
 
 // conta checkboxes (to-dos) e os dias dos marcadores de progresso
 function countTasks(md) {
@@ -41,6 +51,9 @@ export default function NotePage({ onChanged, onDeleted }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [headMenu, setHeadMenu] = useState(null); // null | { x, y }
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiError, setAiError] = useState(null);
 
   const openHeadMenu = (e) => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -49,6 +62,9 @@ export default function NotePage({ onChanged, onDeleted }) {
   const saveTimer = useRef(null);
   const fileInput = useRef(null);
   const editorRef = useRef(null);
+  const titleRef = useRef(null);
+  const bodyRef = useRef(null);
+  const [aiPos, setAiPos] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
     let active = true;
@@ -64,10 +80,48 @@ export default function NotePage({ onChanged, onDeleted }) {
 
   // abre o diálogo de link (disparado pelo menu "/")
   useEffect(() => {
-    const open = () => setLinkOpen(true);
-    window.addEventListener("nova:add-link", open);
-    return () => window.removeEventListener("nova:add-link", open);
+    const openLink = () => setLinkOpen(true);
+    const openAi = () => setAiOpen(true);
+    window.addEventListener("nova:add-link", openLink);
+    window.addEventListener("nova:ai-generate", openAi);
+    return () => {
+      window.removeEventListener("nova:add-link", openLink);
+      window.removeEventListener("nova:ai-generate", openAi);
+    };
   }, []);
+
+  const runAi = async (instruction, meta) => {
+    setAiOpen(false);
+    setAiError(null);
+    // posiciona o indicador no cursor e rola até ele
+    const ed0 = editorRef.current;
+    if (ed0 && bodyRef.current) {
+      ed0.chain().focus().scrollIntoView().run();
+      try {
+        const c = ed0.view.coordsAtPos(ed0.state.selection.from);
+        const r = bodyRef.current.getBoundingClientRect();
+        setAiPos({ top: c.top - r.top, left: c.left - r.left });
+      } catch {
+        setAiPos({ top: 0, left: 0 });
+      }
+    }
+    setAiBusy(true);
+    try {
+      const { content, title, emoji } = await generateNote(instruction, meta);
+      const ed = editorRef.current;
+      if (ed && content)
+        ed.chain().focus().insertContent(marked.parse(content)).run();
+      const patch = {};
+      if (meta && title) patch.title = title;
+      if (meta && emoji)
+        patch.emoji = Array.from(emoji.trim())[0] || emoji.trim();
+      if (Object.keys(patch).length) queueSave(patch);
+    } catch (e) {
+      setAiError(e.message || "Falha ao gerar.");
+    } finally {
+      setAiBusy(false);
+    }
+  };
 
   const queueSave = (patch) => {
     setNote((n) => ({ ...n, ...patch }));
@@ -138,6 +192,13 @@ export default function NotePage({ onChanged, onDeleted }) {
       emoji: !note.is_goal && note.emoji === "📄" ? "🎯" : note.emoji,
     });
   const focusBody = () => editorRef.current?.commands.focus("start");
+
+  // sincroniza o título (carregar nota / título gerado pela IA) sem mover o cursor
+  useEffect(() => {
+    const el = titleRef.current;
+    if (el && el.textContent !== (note?.title || ""))
+      el.textContent = note?.title || "";
+  }, [note?.title]);
 
   if (!note) return <div className="panel">Carregando…</div>;
 
@@ -259,11 +320,13 @@ export default function NotePage({ onChanged, onDeleted }) {
             />
           )}
         </div>
-        <input
+        <div
+          ref={titleRef}
           className="title-input"
-          placeholder="Sem título"
-          value={note.title || ""}
-          onChange={(e) => queueSave({ title: e.target.value })}
+          contentEditable
+          suppressContentEditableWarning
+          data-placeholder="Sem título"
+          onInput={(e) => queueSave({ title: e.currentTarget.textContent })}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === "ArrowDown") {
               e.preventDefault();
@@ -300,7 +363,23 @@ export default function NotePage({ onChanged, onDeleted }) {
             }}
           />
         </div>
-        <div onClick={onBodyClick}>
+        <div
+          ref={bodyRef}
+          onClick={onBodyClick}
+          className={aiBusy ? "generating" : ""}
+          style={{ position: "relative" }}
+        >
+          {aiBusy && (
+            <div className="ai-generating" style={{ top: aiPos.top, left: aiPos.left }}>
+              <span className="ai-generating-text">Gerando</span>
+              <RingLoader color={accentColor()} size={20} />
+            </div>
+          )}
+          {aiError && (
+            <div className="ai-error" style={{ top: aiPos.top, left: aiPos.left }}>
+              {aiError} <button onClick={() => setAiError(null)}>×</button>
+            </div>
+          )}
           <Editor
             content={note.content}
             onChange={handleContent}
@@ -367,6 +446,16 @@ export default function NotePage({ onChanged, onDeleted }) {
           document.body,
         )}
 
+      {aiOpen && (
+        <AIDialog
+          onSubmit={runAi}
+          onCancel={() => setAiOpen(false)}
+          defaultMeta={
+            (!note.title || note.title === "Sem título") &&
+            (!note.emoji || note.emoji === "📄")
+          }
+        />
+      )}
       {linkOpen && (
         <LinkDialog
           notes={allNotes}

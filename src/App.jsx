@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { Menu } from 'lucide-react'
 import Sidebar from './components/Sidebar'
@@ -65,6 +65,16 @@ export default function App() {
     if (location.pathname === `/note/${id}`) navigate('/')
   }, [navigate, refresh, location.pathname])
 
+  // ordem manual da sidebar (campo position)
+  const sortedNotes = useMemo(
+    () => [...notes].sort((a, b) => (a.position ?? 0) - (b.position ?? 0) || (a.updated_at < b.updated_at ? 1 : -1)),
+    [notes],
+  )
+  const handleReorderNotes = useCallback(async (ids) => {
+    setNotes((prev) => ids.map((id, i) => ({ ...prev.find((n) => n.id === id), position: i })))
+    await Promise.all(ids.map((id, i) => notesApi.update(id, { position: i })))
+  }, [])
+
   if (isSupabaseConfigured && authLoading) return <Loader />
   if (needsAuth) return <Login />
 
@@ -73,7 +83,7 @@ export default function App() {
       {booting && <Loader />}
       {cmdk && <CommandPalette notes={notes} onNewNote={handleNewNote} onClose={() => setCmdk(false)} />}
       <button className="burger" onClick={() => setNavOpen(true)} aria-label="Abrir menu"><Menu size={22} /></button>
-      <Sidebar notes={notes} onNewNote={handleNewNote} onDeleteNote={handleDeleteNote} open={navOpen} onClose={() => setNavOpen(false)} />
+      <Sidebar notes={sortedNotes} onNewNote={handleNewNote} onDeleteNote={handleDeleteNote} onReorderNotes={handleReorderNotes} open={navOpen} onClose={() => setNavOpen(false)} />
       <div className="main">
         <Starfield />
         {!isSupabaseConfigured && (

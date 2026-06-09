@@ -2,13 +2,24 @@ import { useState } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import { FONTS, PRESET_COLORS } from '../theme/palette'
-import { Moon, Sun, LogOut, Check } from 'lucide-react'
+import { getGeminiKey, setGeminiKey } from '../lib/ai'
+import { Moon, Sun, LogOut, Check, Sparkles } from 'lucide-react'
 
 export default function Settings() {
   const { settings, setColor, setFont, setMode } = useTheme()
-  const { user, signOut, updateName } = useAuth()
+  const { user, signOut, updateName, updateGeminiKey } = useAuth()
   const [name, setName] = useState(user?.user_metadata?.name || '')
   const [nameStatus, setNameStatus] = useState('idle') // idle | saving | saved
+  const [gemKey, setGemKey] = useState(getGeminiKey())
+  const [gemStatus, setGemStatus] = useState('idle')
+
+  const saveGemKey = async () => {
+    const k = gemKey.trim()
+    setGeminiKey(k) // cache local (runtime)
+    if (user) await updateGeminiKey(k) // salva na conta (Supabase)
+    setGemStatus('saved')
+    setTimeout(() => setGemStatus('idle'), 1500)
+  }
 
   const saveName = async () => {
     if (!name.trim() || name.trim() === (user?.user_metadata?.name || '')) return
@@ -79,6 +90,27 @@ export default function Settings() {
           </button>
           <button className={'chip' + (settings.mode === 'light' ? ' active' : '')} onClick={() => setMode('light')}>
             <Sun size={14} style={{ verticalAlign: 'middle' }} /> Claro
+          </button>
+        </div>
+      </div>
+
+      <div className="settings-row">
+        <label><Sparkles size={14} style={{ verticalAlign: 'middle', color: 'var(--accent)' }} /> IA (Gemini)</label>
+        <span className="hint">
+          Cole sua chave grátis do Gemini para usar o "Gerar com IA" no menu /. Pegue em{' '}
+          <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. Fica salva só no seu navegador.
+        </span>
+        <div style={{ display: 'flex', gap: 8, maxWidth: 460 }}>
+          <input
+            className="field"
+            type="password"
+            placeholder="AIza…"
+            value={gemKey}
+            onChange={(e) => setGemKey(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && saveGemKey()}
+          />
+          <button className="btn-primary" onClick={saveGemKey}>
+            {gemStatus === 'saved' ? <Check size={15} /> : 'Salvar'}
           </button>
         </div>
       </div>

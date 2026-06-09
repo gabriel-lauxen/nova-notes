@@ -39,6 +39,12 @@ const ITEMS = [
       c.run() // remove o "/link"
       window.dispatchEvent(new CustomEvent('nova:add-link'))
     } },
+  { title: 'Gerar com IA', subtitle: 'Escreve com o Gemini', icon: '✨',
+    keywords: 'ia ai gemini gerar escrever texto',
+    run: (c) => {
+      c.run()
+      window.dispatchEvent(new CustomEvent('nova:ai-generate'))
+    } },
 ]
 
 function filterItems(query) {

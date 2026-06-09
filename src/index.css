@@ -164,6 +164,8 @@ a:hover {
   color: var(--text-faint);
   margin-bottom: 6px;
 }
+.ai-check { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 13.5px; color: var(--text-dim); cursor: pointer; }
+.ai-check input { accent-color: var(--accent); width: 16px; height: 16px; }
 .modal-actions {
   display: flex;
   justify-content: flex-end;
@@ -288,6 +290,51 @@ a:hover {
   color: var(--accent);
   opacity: 0.8;
 }
+
+/* "Gerando…" da IA — parece o texto do corpo, com loader discreto */
+.ai-generating {
+  position: absolute; z-index: 5;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg); padding: 2px 8px 2px 0; border-radius: 6px;
+}
+/* loader holográfico: anel com rastro em conic-gradient + glow */
+.ai-generating .ai-loader {
+  width: 18px; height: 18px; margin-top: 5px; flex-shrink: 0; border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0%, var(--accent) 92%, transparent 100%);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2.5px));
+  animation: spin 0.95s linear infinite;
+}
+:root[data-mode='dark'] .ai-generating .ai-loader { filter: drop-shadow(0 0 5px var(--accent-glow)); }
+.ai-generating-text {
+  font-family: var(--font-ui); font-size: 16.5px; line-height: 1.7; font-weight: 600;
+  /* brilho passando sobre o texto */
+  background: linear-gradient(
+    100deg,
+    var(--accent) 38%,
+    color-mix(in srgb, var(--accent) 25%, #fff) 50%,
+    var(--accent) 62%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+  animation: ai-shine 2.2s linear infinite;
+}
+:root[data-mode='dark'] .ai-generating-text {
+  text-shadow: 0 0 8px var(--accent-glow);
+}
+@keyframes ai-shine { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+/* esconde o placeholder do editor enquanto a IA gera */
+.generating .ProseMirror p.is-editor-empty:first-child::before { content: none; }
+@keyframes loader-dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+.ai-error {
+  position: absolute; z-index: 6; max-width: 92%;
+  background: color-mix(in srgb, #ef4444 22%, var(--bg)); color: #fca5a5;
+  border: 1px solid color-mix(in srgb, #ef4444 40%, transparent); border-radius: var(--radius-sm);
+  padding: 10px 12px; font-size: 13px;
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+}
+.ai-error button { color: #fca5a5; font-size: 18px; line-height: 1; }
 
 /* seletor de emoji */
 .emoji-wrap {
@@ -548,11 +595,11 @@ a:hover {
   align-items: center;
   justify-content: center;
   color: var(--accent);
-  background: color-mix(in srgb, var(--bg-elev) 70%, transparent);
-  border: 1px solid var(--border-strong);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
-  box-shadow: 0 0 12px var(--accent-glow);
+  background: transparent;
+}
+/* glow neon só no ícone, apenas no modo escuro (no claro fica feio) */
+:root[data-mode='dark'] .burger svg {
+  filter: drop-shadow(0 0 6px var(--accent-glow)) drop-shadow(0 0 2px var(--accent));
 }
 .nav-backdrop {
   display: none;
@@ -879,7 +926,15 @@ a:hover {
   color: var(--text);
   font-size: 40px;
   font-weight: 700;
+  line-height: 1.15;
   margin-bottom: 18px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.title-input:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-faint);
+  pointer-events: none;
 }
 .emoji-input {
   font-size: 46px;
@@ -2107,6 +2162,12 @@ tbody .habit-name-col {
     transform: translateX(-100%);
     transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
     z-index: 210;
+  }
+  /* no modo claro: opacidade um pouco reduzida, mas legível sobre o backdrop */
+  :root[data-mode='light'] .sidebar {
+    background-color: color-mix(in srgb, var(--bg-elev) 78%, transparent);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
   }
   .sidebar.open {
     transform: translateX(0);
