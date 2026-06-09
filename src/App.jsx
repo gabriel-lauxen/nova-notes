@@ -82,7 +82,7 @@ export default function App() {
     <div className="app">
       {booting && <Loader />}
       {cmdk && <CommandPalette notes={notes} onNewNote={handleNewNote} onClose={() => setCmdk(false)} />}
-      <button className="burger" onClick={() => setNavOpen(true)} aria-label="Abrir menu"><Menu size={22} /></button>
+      <button className="burger" onClick={() => setNavOpen(true)} aria-label="Abrir menu"><Menu size={26} /></button>
       <Sidebar notes={sortedNotes} onNewNote={handleNewNote} onDeleteNote={handleDeleteNote} onReorderNotes={handleReorderNotes} open={navOpen} onClose={() => setNavOpen(false)} />
       <div className="main">
         <Starfield />

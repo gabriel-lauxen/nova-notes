@@ -586,12 +586,13 @@ a:hover {
 .burger {
   display: none;
   position: fixed;
-  top: 14px;
-  left: 14px;
+  /* respeita o notch / safe area do iPhone */
+  top: calc(env(safe-area-inset-top, 0px) + 10px);
+  left: calc(env(safe-area-inset-left, 0px) + 12px);
   z-index: 150;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   align-items: center;
   justify-content: center;
   color: var(--accent);
@@ -2274,7 +2275,7 @@ tbody .habit-name-col {
     text-shadow: 1px 1px 2px rgb(0, 0, 0);
   }
   .home-actions {
-    bottom: 10vh;
+    bottom: 17vh;
     flex-direction: column-reverse;
     align-items: center;
     gap: 12px;
