@@ -670,7 +670,7 @@ a:hover {
   display: none;
   position: fixed;
   /* respeita o notch / safe area do iPhone */
-  top: calc(env(safe-area-inset-top, 0px) + 5px);
+  top: calc(env(safe-area-inset-top, 0px) + 6px);
   left: calc(env(safe-area-inset-left, 0px) + 12px);
   z-index: 150;
   width: 48px;
