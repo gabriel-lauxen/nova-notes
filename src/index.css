@@ -1785,7 +1785,7 @@ tbody .habit-name-col {
   .panel { padding: 64px 20px 120px; overflow-x: hidden; }
 
   /* sobe título/subtítulo (centro do texto) e o header de hábitos full-width */
-  .home-overlay { padding-bottom: 22vh; }
+  .home-overlay { padding-bottom: 12vh; }
   .habits-actions { width: 100%; justify-content: space-between; }
   .habits-actions .btn-primary { white-space: nowrap; }
   .month-nav span { min-width: 0; }
@@ -1816,7 +1816,8 @@ tbody .habit-name-col {
 
   .home-clock { top: 18px; right: 18px; }
   .home-sub { padding-left: 26px; padding-right: 26px; }
-  .home-actions { bottom: 16vh; }
+  .home-actions { bottom: 10vh; }
+  .home-title { font-size: clamp(54px, 16vw, 84px); }
   .metrics { grid-template-columns: 1fr; }
 
   /* evita o zoom automático do iOS ao focar inputs (<16px) */

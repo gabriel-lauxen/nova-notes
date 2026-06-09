@@ -87,7 +87,7 @@ export default function Home({ onNewNote }) {
     const focal = maxR * 2.4;
     const cx = W / 2;
     // no mobile sobe um pouco o centro (acompanha o texto deslocado pra cima)
-    const cy = H / 2 - 20 - (W <= 760 ? H * 0.11 : 0);
+    const cy = H / 2 - 20 - (W <= 760 ? H * 0.06 : 0);
     const spin =
       (GALAXY_SPEED * tRef.current) / Math.max(0.4, rr / (maxR * 0.5));
     const cs = Math.cos(spin);
