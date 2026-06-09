@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -10,6 +10,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { Plus, ChevronLeft, ChevronRight, MoreVertical, Trash2, Pencil, Link2, ExternalLink, GripVertical } from 'lucide-react'
 import { habitsApi, notesApi } from '../lib/store'
+import EmojiPicker from '../components/EmojiPicker'
 
 const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 const WD = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
@@ -78,6 +79,7 @@ export default function Habits() {
   const [ref, setRef] = useState(() => { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth() } })
   const [menu, setMenu] = useState(null) // { id, top, left }
   const [editing, setEditing] = useState(null)
+  const [emojiOpen, setEmojiOpen] = useState(false)
   const [focus, setFocus] = useState('all')
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
@@ -94,6 +96,16 @@ export default function Habits() {
   const isThisMonth = today.getFullYear() === ref.y && today.getMonth() === ref.m
   const n = daysInMonth(ref.y, ref.m)
   const days = useMemo(() => Array.from({ length: n }, (_, i) => i + 1), [n])
+
+  // rola a tabela até o dia atual
+  const tableRef = useRef(null)
+  useEffect(() => {
+    if (loading || !isThisMonth) return
+    const wrap = tableRef.current
+    const cell = wrap?.querySelector('.day-col.today')
+    if (!wrap || !cell) return
+    wrap.scrollLeft += cell.getBoundingClientRect().left - wrap.getBoundingClientRect().left - 200
+  }, [loading, isThisMonth, ref.y, ref.m, habits.length])
 
   const move = (delta) => setRef((r) => { const d = new Date(r.y, r.m + delta, 1); return { y: d.getFullYear(), m: d.getMonth() } })
 
@@ -169,7 +181,7 @@ export default function Habits() {
       {habits.length === 0 ? (
         <p style={{ color: 'var(--text-dim)' }}>Nenhum hábito ainda. Clique em “Hábito” para criar o primeiro.</p>
       ) : (
-        <div className="habit-table-wrap fade-in">
+        <div className="habit-table-wrap fade-in" ref={tableRef}>
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
             <table className="habit-table">
               <thead>
@@ -216,7 +228,17 @@ export default function Habits() {
           <div className="card" style={{ marginTop: 16, maxWidth: 460 }}>
             <div style={{ fontWeight: 600, marginBottom: 12 }}>Editar hábito</div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-              <input className="field" style={{ width: 64, textAlign: 'center' }} maxLength={2} value={h.emoji || ''} onChange={(e) => patch(h.id, { emoji: e.target.value.slice(0, 2) })} />
+              <div className="emoji-wrap">
+                <button className="field" style={{ width: 56, fontSize: 24, padding: 0, lineHeight: 1 }} onClick={() => setEmojiOpen((o) => !o)}>
+                  {h.emoji || '✅'}
+                </button>
+                {emojiOpen && (
+                  <EmojiPicker
+                    onPick={(e) => { patch(h.id, { emoji: e }); setEmojiOpen(false) }}
+                    onClose={() => setEmojiOpen(false)}
+                  />
+                )}
+              </div>
               <input className="field" value={h.name} onChange={(e) => patch(h.id, { name: e.target.value })} placeholder="Nome do hábito" />
             </div>
             <label style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>Vincular a uma nota</label>
