@@ -225,11 +225,15 @@ export default function Habits() {
         const h = habits.find((x) => x.id === editing)
         if (!h) return null
         return (
-          <div className="card" style={{ marginTop: 16, maxWidth: 460 }}>
+          <div className="card" style={{ marginTop: 16, maxWidth: 460, position: 'relative', zIndex: 30 }}>
             <div style={{ fontWeight: 600, marginBottom: 12 }}>Editar hábito</div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 10, alignItems: 'stretch' }}>
               <div className="emoji-wrap">
-                <button className="field" style={{ width: 56, fontSize: 24, padding: 0, lineHeight: 1 }} onClick={() => setEmojiOpen((o) => !o)}>
+                <button
+                  className="field"
+                  style={{ width: 52, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, cursor: 'pointer' }}
+                  onClick={() => setEmojiOpen((o) => !o)}
+                >
                   {h.emoji || '✅'}
                 </button>
                 {emojiOpen && (

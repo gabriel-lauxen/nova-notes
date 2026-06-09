@@ -4,11 +4,11 @@ import { useEffect } from 'react'
 const GROUPS = [
   { label: 'Frequentes', items: '📄 📝 ✅ ⭐ 🎯 🔥 💡 🚀 📌 ❤️ 🎵 💪 🧠 📚 ☕'.split(' ') },
   { label: 'Rostos', items: '😀 😄 😁 😊 🙂 😉 😍 🤩 😎 🤔 😅 😌 😴 😭 😡 🥳 🤯 🙃 😬 🥺 😇 🤓'.split(' ') },
-  { label: 'Gestos & pessoas', items: '👍 👎 👏 🙏 💪 🫶 ✌️ 🤞 👀 🧘 🏃 🚶 🏋️ 🚴 🧗 💃'.split(' ') },
-  { label: 'Natureza', items: '🌟 ✨ ⚡ 🌈 💧 🌊 🌱 🌳 🍀 🌸 🌙 ☀️ ⛅ ❄️ 🪐 🌍 🐾 🦋'.split(' ') },
+  { label: 'Gestos & pessoas', items: '👍 👎 👏 🙏 💪 🦾 🫶 ✌️ 🤞 👀 🧘 🏃 🚶 🏋️ 🚴 🧗 💃'.split(' ') },
+  { label: 'Natureza', items: '🌟 ✨ ⚡ 🌈 💧 🌊 🌱 🌳 🍃 🍁 🍀 🌸 🌙 ☀️ ⛅ ❄️ 🪐 🌍 🐾 🦋'.split(' ') },
   { label: 'Objetos', items: '📖 ✏️ 🖊️ 📒 📓 💻 📱 ⌚ 🎧 📷 🔑 🔒 💰 🛒 🎁 🏆 🥇 ⏰ ⏳ 📅 🗓️ 📊 📈 📉 💼 🎒 🩺 💊'.split(' ') },
   { label: 'Comida', items: '🍎 🍌 🥦 🥗 🍳 🍞 ☕ 🍵 🍫 🍪 🥤 🍕 🍣 🥑'.split(' ') },
-  { label: 'Atividades', items: '⚽ 🏀 🎮 🎸 🎹 🎨 ✈️ 🚗 🏠 🎬 🎤 🎲 🧩'.split(' ') },
+  { label: 'Atividades', items: '⚽ 🏀 🎮 👾 🎸 🎹 🎨 ✈️ 🚗 🏠 🎬 🎤 🎲 🧩'.split(' ') },
   { label: 'Símbolos', items: '❤️ 🧡 💛 💚 💙 💜 🖤 ✅ ❌ ⚠️ ❗ ❓ 💯 ➕ ➖ ☑️ 🔵 🟢 🟣 🔴'.split(' ') },
 ]
 
