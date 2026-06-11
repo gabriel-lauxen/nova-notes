@@ -203,7 +203,7 @@ export default function JarvisCore() {
       const rect = canvas.parentElement.getBoundingClientRect();
       W = rect.width;
       H = rect.height;
-      maxR = Math.min(W, H) * 0.5;
+      maxR = Math.min(W, H) * 0.45; // margem lateral (a perspectiva joga pontos pra fora)
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = W * dpr;
       canvas.height = H * dpr;

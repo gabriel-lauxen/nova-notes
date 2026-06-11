@@ -105,7 +105,7 @@ export default function Home({
     if (!home) return { x: 0, y: 0, scale: 1 };
     const W = home.clientWidth;
     const H = home.clientHeight;
-    const maxR = Math.min(W, H) * 0.5;
+    const maxR = Math.min(W, H) * 0.45;
     const rr = maxR * 0.82;
     const focal = maxR * 2.4;
     const cx = W / 2;
@@ -244,7 +244,7 @@ export default function Home({
     let mx, my;
     if (mode === "core") {
       // o núcleo transborda o botão; margem maior pra o espaço VISUAL ficar certo
-      const coreSize = isMobile ? 104 : 200;
+      const coreSize = isMobile ? 44 : 88;
       const overflow = Math.max(0, (coreSize - h) / 2);
       const visual = isMobile ? 24 : 34;
       mx = overflow + visual;

@@ -1127,8 +1127,60 @@ a:hover {
 }
 .ProseMirror ul[data-type="taskList"] li {
   display: flex;
-  gap: 8px;
+  gap: 11px;
   align-items: flex-start;
+  margin: 0.5em 0; /* mais respiro entre os itens */
+}
+.ProseMirror ul[data-type="taskList"] li > label {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  height: 1.7em; /* = altura da 1ª linha -> centraliza o box com o texto */
+  user-select: none;
+}
+.ProseMirror ul[data-type="taskList"] li > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* checkbox neon na cor primária */
+.ProseMirror ul[data-type="taskList"] li input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  border: 1.6px solid var(--accent);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  cursor: pointer;
+  position: relative;
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.ProseMirror ul[data-type="taskList"] li input[type="checkbox"]:hover {
+  box-shadow: 0 0 9px var(--accent-glow);
+}
+.ProseMirror ul[data-type="taskList"] li input[type="checkbox"]:checked {
+  background: var(--accent);
+  box-shadow: 0 0 11px var(--accent-glow);
+}
+.ProseMirror ul[data-type="taskList"] li input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 1.5px;
+  width: 4.5px;
+  height: 9px;
+  border: solid var(--bg);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+/* texto riscado quando concluído */
+.ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div {
+  opacity: 0.55;
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--accent) 60%, transparent);
 }
 .ProseMirror hr {
   border: none;
@@ -1431,8 +1483,12 @@ a:hover {
   mask-image: linear-gradient(to bottom, #000 0%, #000 58%, transparent 100%);
 }
 @keyframes matrix-fade-in {
-  from { opacity: 0; }
-  to { opacity: 0.45; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.45;
+  }
 }
 .matrix-rain.tl {
   top: 0;
@@ -2131,27 +2187,30 @@ tbody .habit-name-col {
 }
 
 /* "jarvis core": núcleo de espinhos neon radiais contra-girando + estrela central */
+/* --cs = tamanho dos cubos (único ajuste). Tudo escala a partir dele. */
 .voice-core {
-  width: 190px;
-  height: 190px;
+  --cs: 88px;
+  width: var(--cs);
+  height: var(--cs);
   flex: 0 0 auto; /* NÃO encolher dentro do botão flex */
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  perspective: 620px;
+  perspective: calc(var(--cs) * 6.5);
+  overflow: visible;
 }
 @media (max-width: 760px) {
   .voice-core {
-    width: 94px;
-    height: 94px;
+    --cs: 44px;
   }
 }
 
 /* formas 3D: dois cubos wireframe girando em eixos diferentes */
 .vc3-scene {
   position: relative;
-  width: 66px;
-  height: 66px;
+  width: var(--cs);
+  height: var(--cs);
+  flex: 0 0 auto;
   transform-style: preserve-3d;
 }
 .vc3 {
@@ -2160,15 +2219,15 @@ tbody .habit-name-col {
 }
 .vc3-a {
   inset: 0;
-  --h: 33px;
+  --h: calc(var(--cs) * 0.5);
   animation: vc3-spin-a 7s linear infinite;
 }
 .vc3-b {
-  width: 36px;
-  height: 36px;
-  top: 15px;
-  left: 15px;
-  --h: 18px;
+  width: calc(var(--cs) * 0.55);
+  height: calc(var(--cs) * 0.55);
+  top: calc(var(--cs) * 0.225);
+  left: calc(var(--cs) * 0.225);
+  --h: calc(var(--cs) * 0.275);
   animation: vc3-spin-b 5s linear infinite;
 }
 .vf {
@@ -2178,19 +2237,39 @@ tbody .habit-name-col {
   box-shadow: 0 0 8px var(--accent-glow);
   background: color-mix(in srgb, var(--accent) 4%, transparent);
 }
-.vf-fr { transform: translateZ(var(--h)); }
-.vf-bk { transform: rotateY(180deg) translateZ(var(--h)); }
-.vf-rt { transform: rotateY(90deg) translateZ(var(--h)); }
-.vf-lf { transform: rotateY(-90deg) translateZ(var(--h)); }
-.vf-tp { transform: rotateX(90deg) translateZ(var(--h)); }
-.vf-bt { transform: rotateX(-90deg) translateZ(var(--h)); }
+.vf-fr {
+  transform: translateZ(var(--h));
+}
+.vf-bk {
+  transform: rotateY(180deg) translateZ(var(--h));
+}
+.vf-rt {
+  transform: rotateY(90deg) translateZ(var(--h));
+}
+.vf-lf {
+  transform: rotateY(-90deg) translateZ(var(--h));
+}
+.vf-tp {
+  transform: rotateX(90deg) translateZ(var(--h));
+}
+.vf-bt {
+  transform: rotateX(-90deg) translateZ(var(--h));
+}
 @keyframes vc3-spin-a {
-  from { transform: rotateX(-18deg) rotateY(0deg); }
-  to { transform: rotateX(-18deg) rotateY(360deg); }
+  from {
+    transform: rotateX(-18deg) rotateY(0deg);
+  }
+  to {
+    transform: rotateX(-18deg) rotateY(360deg);
+  }
 }
 @keyframes vc3-spin-b {
-  from { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
-  to { transform: rotateX(360deg) rotateY(-360deg) rotateZ(0deg); }
+  from {
+    transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+  }
+  to {
+    transform: rotateX(360deg) rotateY(-360deg) rotateZ(0deg);
+  }
 }
 .vc-spike {
   fill: color-mix(in srgb, var(--accent) 14%, transparent);
@@ -2236,9 +2315,15 @@ tbody .habit-name-col {
   opacity: 0.6;
 }
 @keyframes vc-hexspin {
-  0% { transform: scaleX(1); }
-  50% { transform: scaleX(-1); }
-  100% { transform: scaleX(1); }
+  0% {
+    transform: scaleX(1);
+  }
+  50% {
+    transform: scaleX(-1);
+  }
+  100% {
+    transform: scaleX(1);
+  }
 }
 /* camadas giram em sentidos opostos; escala (voz) é aplicada no grupo interno */
 .vc-spin-a {
