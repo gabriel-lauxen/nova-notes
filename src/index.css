@@ -534,7 +534,10 @@ a:hover {
   border-radius: 8px;
   color: var(--text-faint);
   opacity: 0.8;
-  transition: opacity 0.15s, background 0.15s, color 0.15s;
+  transition:
+    opacity 0.15s,
+    background 0.15s,
+    color 0.15s;
 }
 .meta-btn:hover {
   opacity: 1;
@@ -1198,7 +1201,52 @@ a:hover {
 }
 .ProseMirror ul,
 .ProseMirror ol {
-  padding-left: 1.4em;
+  padding-left: 2em;
+}
+/* bullets e números das listas em neon (cor primária) — exceto to-do */
+.ProseMirror ul:not([data-type="taskList"]),
+.ProseMirror ol {
+  list-style: none;
+}
+.ProseMirror ul:not([data-type="taskList"]) > li,
+.ProseMirror ol > li {
+  position: relative;
+}
+.ProseMirror ul:not([data-type="taskList"]) > li::before {
+  content: "";
+  position: absolute;
+  left: -1.5em;
+  top: 0.8em;
+  transform: translateY(-50%);
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.ProseMirror ol {
+  counter-reset: ol-item;
+}
+.ProseMirror ol > li {
+  counter-increment: ol-item;
+}
+.ProseMirror ol > li::before {
+  content: counter(ol-item) ".";
+  position: absolute;
+  left: -1.7em;
+  width: 1.5em;
+  text-align: right;
+  color: var(--accent);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+:root[data-mode="dark"]
+  .ProseMirror
+  ul:not([data-type="taskList"])
+  > li::before {
+  box-shadow: 0 0 7px var(--accent-glow);
+}
+:root[data-mode="dark"] .ProseMirror ol > li::before {
+  text-shadow: 0 0 7px var(--accent-glow);
 }
 .ProseMirror code {
   background: var(--surface);
@@ -1242,7 +1290,10 @@ a:hover {
   background: color-mix(in srgb, var(--bg-elev) 80%, transparent);
   border: 1px solid var(--border);
   opacity: 0;
-  transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+  transition:
+    opacity 0.15s,
+    color 0.15s,
+    border-color 0.15s;
   cursor: pointer;
 }
 .codeblock:hover .code-copy {
@@ -1554,8 +1605,13 @@ a:hover {
   animation: acc-pulse 1.1s ease-in-out infinite;
 }
 @keyframes acc-pulse {
-  0%, 100% { box-shadow: 0 0 0 transparent; }
-  50% { box-shadow: 0 0 12px var(--accent-glow); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 transparent;
+  }
+  50% {
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
 }
 /* botão de microfone flutuante na nota (arrastável -> refatorar por voz) */
 .note-mic {
@@ -1573,9 +1629,12 @@ a:hover {
   box-shadow: 0 0 16px var(--accent-glow);
   cursor: grab;
   touch-action: none;
-  transition: left 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+  transition:
+    left 0.28s cubic-bezier(0.22, 1, 0.36, 1),
     right 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-    width 0.2s ease, opacity 0.2s ease, transform 0.12s ease;
+    width 0.2s ease,
+    opacity 0.2s ease,
+    transform 0.12s ease;
 }
 /* enquanto arrasta, segue o dedo sem transição */
 .note-mic.dragging {
@@ -1749,7 +1808,10 @@ a:hover {
   border: 1px solid var(--border);
   opacity: 0.7;
   cursor: pointer;
-  transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+  transition:
+    opacity 0.15s,
+    color 0.15s,
+    border-color 0.15s;
 }
 .toggle-level:hover {
   opacity: 1;
