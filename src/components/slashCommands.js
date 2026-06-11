@@ -51,6 +51,12 @@ const ITEMS = [
       c.run()
       window.dispatchEvent(new CustomEvent('nova:ai-voice'))
     } },
+  { title: 'Refatorar', subtitle: 'Reescreve a nota com IA', icon: '↻',
+    keywords: 'refatorar reescrever mudar alterar melhorar resumir ia ai texto',
+    run: (c) => {
+      c.run()
+      window.dispatchEvent(new CustomEvent('nova:ai-refactor'))
+    } },
 ]
 
 // pontua cada item pela relevância à busca (título e palavras-chave),

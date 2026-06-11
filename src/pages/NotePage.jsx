@@ -12,6 +12,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import Editor from "../components/Editor";
+import Spinner from "../components/Spinner";
 import LinkDialog from "../components/LinkDialog";
 import ConfirmDialog from "../components/ConfirmDialog";
 import EmojiPicker from "../components/EmojiPicker";
@@ -61,10 +62,19 @@ export default function NotePage({ onChanged, onDeleted }) {
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [headMenu, setHeadMenu] = useState(null); // null | { x, y }
   const [aiOpen, setAiOpen] = useState(false);
+  const [refactorOpen, setRefactorOpen] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
   const [aiError, setAiError] = useState(null);
   const [recording, setRecording] = useState(false);
   const [readMode, setReadMode] = useState(false);
+
+  // só mostra o loader se demorar mais de 500ms
+  const [showLoader, setShowLoader] = useState(false);
+  useEffect(() => {
+    setShowLoader(false);
+    const t = setTimeout(() => setShowLoader(true), 500);
+    return () => clearTimeout(t);
+  }, [id]);
 
   // modo leitura é salvo por nota (independente)
   useEffect(() => {
@@ -117,13 +127,16 @@ export default function NotePage({ onChanged, onDeleted }) {
     const openLink = () => setLinkOpen(true);
     const openAi = () => setAiOpen(true);
     const openVoice = () => runVoiceRef.current?.();
+    const openRefactor = () => setRefactorOpen(true);
     window.addEventListener("nova:add-link", openLink);
     window.addEventListener("nova:ai-generate", openAi);
     window.addEventListener("nova:ai-voice", openVoice);
+    window.addEventListener("nova:ai-refactor", openRefactor);
     return () => {
       window.removeEventListener("nova:add-link", openLink);
       window.removeEventListener("nova:ai-generate", openAi);
       window.removeEventListener("nova:ai-voice", openVoice);
+      window.removeEventListener("nova:ai-refactor", openRefactor);
     };
   }, []);
 
@@ -160,6 +173,34 @@ export default function NotePage({ onChanged, onDeleted }) {
     }
   };
 
+  // refatora: pega o conteúdo atual da nota e reescreve conforme o pedido
+  const runRefactor = async (userPrompt) => {
+    setRefactorOpen(false);
+    setAiError(null);
+    const ed = editorRef.current;
+    if (!ed) return;
+    const current = ed.storage.markdown.getMarkdown();
+    // posiciona o "Gerando" no topo do corpo
+    setAiPos({ top: 0, left: 0 });
+    if (bodyRef.current) ed.chain().focus().scrollIntoView().run();
+    setAiBusy(true);
+    try {
+      const prompt =
+        "Abaixo está o conteúdo atual de uma nota em Markdown. Reescreva/refatore o " +
+        "conteúdo TODO conforme o pedido do usuário e devolva a nota completa em " +
+        "Markdown (sem comentários nem explicações). Pedido: " +
+        userPrompt +
+        "\n\n--- Conteúdo atual ---\n" +
+        (current || "(vazio)");
+      const { content } = await generateNote(prompt, false);
+      if (content) ed.chain().focus().setContent(content).run();
+    } catch (e) {
+      setAiError(e.message || "Falha ao refatorar.");
+    } finally {
+      setAiBusy(false);
+    }
+  };
+
   // grava a voz, transcreve e gera o texto no cursor (item "/" Gerar com voz)
   const runVoice = async () => {
     // posiciona o indicador no cursor (igual ao "Gerando")
@@ -191,7 +232,15 @@ export default function NotePage({ onChanged, onDeleted }) {
     try {
       const text = await transcribe(blob);
       if (!text) throw new Error("Não entendi o áudio. Tente de novo.");
-      const { content } = await generateNote(text, false);
+      // enquadra o ditado como pedido de nota, pra a IA aplicar as regras
+      // de formatação do SYSTEM (checkboxes, tabelas, títulos…)
+      const prompt =
+        "A seguir está um ditado de voz. Transforme em uma nota bem organizada " +
+        "em Markdown, aplicando a formatação adequada (use checkboxes '- [ ] ' para " +
+        "itens acionáveis/listas de compras/tarefas, tabelas quando houver dados a " +
+        "comparar, títulos e listas quando ajudar). Preserve o conteúdo, melhore só a " +
+        'estrutura. Ditado:\n\n"' + text + '"';
+      const { content } = await generateNote(prompt, false);
       const ed = editorRef.current;
       if (ed && content)
         ed.chain().focus().insertContent(marked.parse(content)).run();
@@ -287,7 +336,7 @@ export default function NotePage({ onChanged, onDeleted }) {
       el.textContent = note?.title || "";
   }, [note?.title]);
 
-  if (!note) return <div className="panel">Carregando…</div>;
+  if (!note) return showLoader ? <Spinner /> : null;
 
   return (
     <div className="editor-page" style={{ "--note-fs": FONT_SCALES[fontIdx] }}>
@@ -453,7 +502,7 @@ export default function NotePage({ onChanged, onDeleted }) {
         <div
           ref={bodyRef}
           onClick={onBodyClick}
-          className={"note-body" + (aiBusy ? " generating" : "")}
+          className={"note-body" + (aiBusy || recording ? " generating" : "")}
           style={{ position: "relative" }}
         >
           {recording && (
@@ -591,6 +640,16 @@ export default function NotePage({ onChanged, onDeleted }) {
             (!note.title || note.title === "Sem título") &&
             (!note.emoji || note.emoji === "📄")
           }
+        />
+      )}
+      {refactorOpen && (
+        <AIDialog
+          title="Refatorar com IA"
+          message="Como quer mudar o texto da nota? A IA reescreve o conteúdo todo."
+          placeholder="Ex.: resuma em tópicos · deixe mais formal · vire um checklist"
+          hideMeta
+          onSubmit={runRefactor}
+          onCancel={() => setRefactorOpen(false)}
         />
       )}
       {linkOpen && (

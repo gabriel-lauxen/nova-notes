@@ -1,36 +1,86 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
-  DndContext, PointerSensor, useSensor, useSensors, closestCenter,
+  DndContext, MouseSensor, TouchSensor, useSensor, useSensors, closestCenter,
 } from '@dnd-kit/core'
 import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Home, Target, CalendarCheck, Settings, Plus, FileText, Trash2 } from 'lucide-react'
 import ConfirmDialog from './ConfirmDialog'
 
-function NoteItem({ n, onContextMenu }) {
+function NoteItem({ n, onContextMenu, onDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: n.id })
+  const [dx, setDx] = useState(0)
+  const [open, setOpen] = useState(false)
+  const live = useRef(false)
+  const sx = useRef(0), sy = useRef(0), swiping = useRef(false)
+
+  const onTouchStart = (e) => {
+    listeners?.onTouchStart?.(e) // mantém o drag de reordenar (TouchSensor)
+    const t = e.touches[0]
+    sx.current = t.clientX; sy.current = t.clientY; swiping.current = false
+  }
+  const onTouchMove = (e) => {
+    const t = e.touches[0]
+    const ddx = t.clientX - sx.current, ddy = t.clientY - sy.current
+    if (!swiping.current) {
+      if (Math.abs(ddx) > 10 && Math.abs(ddx) > Math.abs(ddy) * 1.3) swiping.current = true
+      else return
+    }
+    live.current = true
+    const base = open ? -72 : 0
+    setDx(Math.max(-86, Math.min(0, base + ddx)))
+  }
+  const onTouchEnd = () => {
+    if (!swiping.current) return
+    live.current = false
+    const willOpen = dx < -36
+    setOpen(willOpen)
+    setDx(willOpen ? -72 : 0)
+    swiping.current = false
+  }
+
+  const revealed = open || dx < -2
+  const reveal = -dx // 0..72 -> quanto o item encolhe (revela o botão)
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    // o item ENCOLHE pela direita; o título fica no lugar (não desliza)
+    width: revealed ? `calc(100% - ${reveal}px)` : undefined,
+    transition: isDragging ? transition : live.current ? 'none' : 'width 0.2s ease, transform 0.2s ease',
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 50 : undefined,
+    ...(revealed ? { backgroundColor: 'var(--bg-elev)', overflow: 'hidden' } : null),
   }
   return (
-    <NavLink
-      ref={setNodeRef}
-      style={style}
-      to={`/note/${n.id}`}
-      draggable={false}
-      className={({ isActive }) => 'nav-item' + (isActive ? ' active' : '')}
-      onContextMenu={(e) => onContextMenu(e, n.id)}
-      {...attributes}
-      {...listeners}
-    >
-      <span className="emoji">{n.emoji || <FileText size={15} />}</span>
-      <span className="title">{n.title || 'Sem título'}</span>
-    </NavLink>
+    <div className="nav-swipe">
+      {revealed && (
+        <button
+          className="nav-del"
+          onClick={() => { setOpen(false); setDx(0); onDelete(n) }}
+          aria-label="Excluir nota"
+        >
+          <Trash2 size={16} />
+        </button>
+      )}
+      <NavLink
+        ref={setNodeRef}
+        style={style}
+        to={`/note/${n.id}`}
+        draggable={false}
+        className={({ isActive }) => 'nav-item' + (isActive ? ' active' : '')}
+        onContextMenu={(e) => onContextMenu(e, n.id)}
+        onClick={(e) => { if (open) { e.preventDefault(); setOpen(false); setDx(0) } }}
+        {...attributes}
+        {...listeners}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        <span className="emoji">{n.emoji || <FileText size={15} />}</span>
+        <span className="title">{n.title || 'Sem título'}</span>
+      </NavLink>
+    </div>
   )
 }
 
@@ -39,8 +89,12 @@ export default function Sidebar({ notes, onNewNote, onDeleteNote, onReorderNotes
   const [menu, setMenu] = useState(null) // { id, x, y }
   const [confirm, setConfirm] = useState(null) // { id, title }
 
-  // arrasto começa após 6px de movimento → clique simples continua navegando
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
+  // mouse: arrasta após 6px (clique simples navega).
+  // toque (iPhone): segura ~220ms pra arrastar; toque rápido navega; rolar cancela.
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 220, tolerance: 8 } }),
+  )
 
   const openMenu = (e, id) => {
     e.preventDefault()
@@ -77,7 +131,12 @@ export default function Sidebar({ notes, onNewNote, onDeleteNote, onReorderNotes
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
           <SortableContext items={notes.map((n) => n.id)} strategy={verticalListSortingStrategy}>
             {notes.map((n) => (
-              <NoteItem key={n.id} n={n} onContextMenu={openMenu} />
+              <NoteItem
+                key={n.id}
+                n={n}
+                onContextMenu={openMenu}
+                onDelete={(note) => setConfirm({ id: note.id, title: note.title || 'Sem título' })}
+              />
             ))}
           </SortableContext>
         </DndContext>

@@ -785,6 +785,10 @@ a:hover {
   width: 100%;
   text-align: left;
   text-decoration: none;
+  /* iPhone: segurar o item arrasta (reordenar) em vez de abrir o preview de link */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
   transition:
     background 0.15s,
     color 0.15s;
@@ -793,6 +797,40 @@ a:hover {
   background: var(--surface-hover);
   color: var(--text);
   text-decoration: none;
+}
+/* swipe-to-delete (mobile): arrasta o item pra esquerda e revela o botão */
+.nav-swipe {
+  position: relative;
+  overflow: hidden;
+  border-radius: 9px;
+}
+.nav-swipe .nav-item {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+.nav-swipe .nav-item .title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.nav-del {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  color: #ff6b78;
+  background: color-mix(in srgb, #ff4d5e 20%, transparent);
+  z-index: 0;
+}
+.nav-del:active {
+  background: color-mix(in srgb, #ff4d5e 32%, transparent);
 }
 .nav-item.active {
   background: var(--accent-soft);
@@ -1007,6 +1045,19 @@ a:hover {
 
 .spin {
   animation: spin 1s linear infinite;
+}
+
+/* loader "cometa" (canvas), centralizado na página */
+.page-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pl-canvas {
+  width: 92px;
+  height: 92px;
 }
 @keyframes spin {
   to {
