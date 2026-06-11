@@ -20,6 +20,7 @@ export default function App() {
   const [booting, setBooting] = useState(true)
   const [cmdk, setCmdk] = useState(false)
   const [navOpen, setNavOpen] = useState(false)
+  const [pendingVoice, setPendingVoice] = useState(false)
   const { loading: authLoading, needsAuth } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -55,17 +56,21 @@ export default function App() {
     }
   }, [])
 
-  // atalho Ctrl/Cmd+K
+  // atalhos: Ctrl/Cmd+K (busca) e Ctrl/Cmd+J (ir pra Home e gravar voz)
   useEffect(() => {
     const onKey = (e) => {
       if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
         e.preventDefault()
         setCmdk((o) => !o)
+      } else if ((e.metaKey || e.ctrlKey) && (e.key === 'j' || e.key === 'J')) {
+        e.preventDefault()
+        navigate('/')
+        setPendingVoice(true)
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [])
+  }, [navigate])
 
   const refresh = useCallback(() => notesApi.list().then(setNotes).catch(() => {}), [])
   useEffect(() => { if (!needsAuth) refresh() }, [refresh, needsAuth])
@@ -121,7 +126,7 @@ export default function App() {
         )}
         <div className="page-enter" key={`page-${location.pathname}`}>
           <Routes>
-            <Route path="/" element={<Home onNewNote={handleNewNote} />} />
+            <Route path="/" element={<Home onNewNote={handleNewNote} onRefresh={refresh} pendingVoice={pendingVoice} onVoiceConsumed={() => setPendingVoice(false)} />} />
             <Route path="/goals" element={<Goals />} />
             <Route path="/habits" element={<Habits />} />
             <Route path="/settings" element={<Settings />} />

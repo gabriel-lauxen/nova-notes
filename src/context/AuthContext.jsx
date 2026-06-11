@@ -1,13 +1,19 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
-import { setGeminiKey } from '../lib/ai'
+import { setGeminiKey, setGroqKey, setCerebrasKey, setProvider } from '../lib/ai'
 
 const AuthContext = createContext(null)
 
-// puxa a chave do Gemini salva na conta para o cache local (runtime)
-function syncGeminiKey(user) {
-  const k = user?.user_metadata?.gemini_key
-  if (k) setGeminiKey(k)
+// puxa as chaves/preferências de IA salvas na conta para o cache local (runtime)
+function syncKeys(user) {
+  const g = user?.user_metadata?.gemini_key
+  if (g) setGeminiKey(g)
+  const q = user?.user_metadata?.groq_key
+  if (q) setGroqKey(q)
+  const c = user?.user_metadata?.cerebras_key
+  if (c) setCerebrasKey(c)
+  const p = user?.user_metadata?.ai_provider
+  if (p) setProvider(p)
 }
 
 export function AuthProvider({ children }) {
@@ -18,12 +24,12 @@ export function AuthProvider({ children }) {
     if (!isSupabaseConfigured) return
     supabase.auth.getSession().then(({ data }) => {
       setUser(data.session?.user ?? null)
-      syncGeminiKey(data.session?.user)
+      syncKeys(data.session?.user)
       setLoading(false)
     })
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       setUser(session?.user ?? null)
-      syncGeminiKey(session?.user)
+      syncKeys(session?.user)
     })
     return () => sub.subscription.unsubscribe()
   }, [])
@@ -38,6 +44,9 @@ export function AuthProvider({ children }) {
       supabase.auth.signUp({ email, password, options: { data: { name } } }),
     updateName: (name) => supabase.auth.updateUser({ data: { name } }),
     updateGeminiKey: (gemini_key) => supabase.auth.updateUser({ data: { gemini_key } }),
+    updateGroqKey: (groq_key) => supabase.auth.updateUser({ data: { groq_key } }),
+    updateCerebrasKey: (cerebras_key) => supabase.auth.updateUser({ data: { cerebras_key } }),
+    updateAiProvider: (ai_provider) => supabase.auth.updateUser({ data: { ai_provider } }),
     signOut: () => supabase.auth.signOut(),
   }
 

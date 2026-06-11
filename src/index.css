@@ -315,6 +315,37 @@ a:hover {
   padding: 2px 8px 2px 0;
   border-radius: 6px;
 }
+
+/* indicador "Ouvindo" (gravação por voz no editor) */
+.ai-listening {
+  position: absolute;
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  border: 1px solid color-mix(in srgb, #ff4d5e 45%, transparent);
+  padding: 4px 11px;
+  border-radius: 999px;
+  cursor: pointer;
+  color: #ff6b78;
+  font-size: 13px;
+  font-weight: 600;
+}
+.ai-listening-text {
+  text-shadow: 0 0 8px rgba(255, 77, 94, 0.5);
+}
+.ai-listening-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ff4d5e;
+  box-shadow: 0 0 8px rgba(255, 77, 94, 0.9);
+  animation: voice-pulse 1.1s ease-in-out infinite;
+}
+:root[data-mode='light'] .ai-listening-text {
+  text-shadow: none;
+}
 /* loader holográfico: anel com rastro em conic-gradient + glow */
 .ai-generating .ai-loader {
   width: 18px;
@@ -1106,25 +1137,45 @@ a:hover {
 }
 
 /* tabelas */
+.ProseMirror .tableWrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0.8em 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  /* dica visual de que rola na horizontal */
+  background:
+    linear-gradient(to right, var(--bg-elev) 30%, transparent),
+    linear-gradient(to left, var(--bg-elev) 30%, transparent) 100% 0,
+    radial-gradient(farthest-side at 0 50%, rgba(0,0,0,0.12), transparent),
+    radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,0.12), transparent) 100% 0;
+  background-repeat: no-repeat;
+  background-size: 28px 100%, 28px 100%, 14px 100%, 14px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
 .ProseMirror table {
   border-collapse: collapse;
   width: 100%;
-  margin: 0.6em 0;
+  margin: 0;
   table-layout: fixed;
-  overflow: hidden;
 }
 .ProseMirror th,
 .ProseMirror td {
   border: 1px solid var(--border);
-  padding: 8px 11px;
+  padding: 9px 13px;
   vertical-align: top;
   position: relative;
-  min-width: 60px;
+  min-width: 64px;
+  line-height: 1.5;
 }
 .ProseMirror th {
-  background: var(--surface);
+  background: var(--accent-soft);
   font-weight: 600;
   text-align: left;
+  color: var(--text);
+}
+.ProseMirror tbody tr:nth-child(even) td {
+  background: color-mix(in srgb, var(--surface) 50%, transparent);
 }
 .ProseMirror .selectedCell:after {
   content: "";
@@ -1700,6 +1751,54 @@ tbody .habit-name-col {
   gap: 10px;
   margin-bottom: 30px;
 }
+
+/* item colapsável (ex.: AI API keys) — texto neon, sem fundo */
+.ai-keys {
+  margin-bottom: 30px;
+}
+.ai-keys-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--accent);
+  text-shadow: 0 0 8px var(--accent-glow);
+}
+:root[data-mode='light'] .ai-keys-toggle {
+  text-shadow: none;
+}
+.ai-keys-arrow {
+  transition: transform 0.35s ease;
+}
+.ai-keys-arrow.open {
+  transform: rotate(-180deg);
+}
+/* animação suave de abertura via grid-template-rows (0fr -> 1fr) */
+.ai-keys-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.38s ease, opacity 0.3s ease;
+  opacity: 0;
+}
+.ai-keys-content.open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.ai-keys-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+.ai-keys-content.open .ai-keys-inner {
+  padding-top: 22px;
+}
+.ai-keys .settings-row:last-child {
+  margin-bottom: 0;
+}
 .settings-row > label {
   font-weight: 600;
   font-size: 14px;
@@ -1767,6 +1866,26 @@ tbody .habit-name-col {
 .home canvas {
   position: absolute;
   inset: 0;
+  z-index: 2; /* galáxia na frente das estrelas de fundo (Starfield) */
+}
+/* durante o processamento: zoom rápido e gigante no core, que voa pra fora da tela */
+.home-zoom canvas {
+  transform: scale(22);
+  opacity: 0;
+  transition: transform 0.6s cubic-bezier(0.6, 0, 1, 1), opacity 0.55s ease-in 0.18s;
+}
+.home-zoom .home-overlay,
+.home-zoom .home-clock {
+  opacity: 0 !important;
+  transition: opacity 0.4s ease;
+}
+/* fade do corpo do texto ao abrir a nota (não aparecer "seco") */
+.note-body {
+  animation: note-fade 0.6s ease both;
+}
+@keyframes note-fade {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
 }
 .home-overlay {
   position: absolute;
@@ -1892,6 +2011,153 @@ tbody .habit-name-col {
       0 0 28px var(--accent-glow),
       inset 0 0 18px color-mix(in srgb, var(--accent) 26%, transparent);
   }
+}
+
+/* ---------- ícone de voz (gravação) ---------- */
+.voice-orbit {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 6;
+  transform-origin: top left;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.voice-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  background: radial-gradient(
+    circle at 50% 38%,
+    color-mix(in srgb, var(--accent) 24%, transparent),
+    transparent 70%
+  );
+  box-shadow:
+    0 0 18px var(--accent-glow),
+    inset 0 0 12px color-mix(in srgb, var(--accent) 18%, transparent);
+  cursor: pointer;
+  transition: box-shadow 0.25s ease, transform 0.15s ease;
+}
+.voice-btn svg {
+  filter: drop-shadow(0 0 6px var(--accent-glow));
+}
+.voice-btn:hover {
+  box-shadow:
+    0 0 34px var(--accent-glow),
+    inset 0 0 20px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.voice-btn:active {
+  transform: scale(0.94);
+}
+/* gravando: sem botão vermelho — só os cubos neon girando */
+.voice-btn.recording {
+  border-color: transparent;
+  background: none;
+  box-shadow: none;
+}
+.voice-btn.recording:hover {
+  box-shadow: none;
+}
+
+/* "jarvis core": núcleo de espinhos neon radiais contra-girando + estrela central */
+.voice-core {
+  width: 200px;
+  height: 200px;
+  flex: 0 0 auto; /* NÃO encolher dentro do botão flex (era isso que deixava pequeno) */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 800px; /* dá profundidade 3D ao tombamento */
+}
+.voice-core svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0 3px var(--accent-glow));
+  transform-style: preserve-3d;
+  animation: vc-tilt 9s ease-in-out infinite; /* tomba/gira levemente em 3D */
+}
+@media (max-width: 760px) {
+  .voice-core { width: 104px; height: 104px; }
+}
+@keyframes vc-tilt {
+  0%, 100% { transform: rotateX(26deg) rotateZ(-6deg); }
+  50% { transform: rotateX(38deg) rotateZ(8deg); }
+}
+.vc-spike {
+  fill: color-mix(in srgb, var(--accent) 14%, transparent);
+  stroke: var(--accent);
+  stroke-width: 1.1;
+  stroke-linejoin: round;
+}
+.vc-spike-in {
+  fill: color-mix(in srgb, var(--accent) 26%, transparent);
+}
+.vc-star {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.1;
+  stroke-linejoin: round;
+  opacity: 0.85;
+}
+.vc-core-dot {
+  fill: var(--accent);
+}
+/* camadas giram em sentidos opostos; escala (voz) é aplicada no grupo interno */
+.vc-spin-a { animation: vc-rot 9s linear infinite; }
+.vc-spin-b { animation: vc-rot 6.5s linear infinite reverse; }
+.vc-spin-c { animation: vc-rot 12s linear infinite; }
+.vc-spin-a, .vc-spin-b, .vc-spin-c, .vc-scale {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes vc-rot {
+  to { transform: rotate(360deg); }
+}
+.voice-btn.processing,
+.voice-btn.connecting {
+  cursor: default;
+}
+.voice-spin {
+  animation: voice-rot 0.9s linear infinite;
+}
+.voice-label {
+  font-size: 13px;
+  color: var(--accent);
+  text-shadow: 0 0 6px var(--accent-glow);
+  white-space: nowrap;
+}
+.voice-err {
+  position: absolute;
+  right: 16px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
+  z-index: 80;
+  max-width: min(86%, 320px);
+  padding: 10px 13px;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #ff8a95;
+  background: color-mix(in srgb, #ff4d5e 14%, var(--bg-elev));
+  border: 1px solid color-mix(in srgb, #ff4d5e 45%, transparent);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+@keyframes voice-pulse {
+  0%, 100% { box-shadow: 0 0 18px rgba(255, 77, 94, 0.5), inset 0 0 12px rgba(255, 77, 94, 0.28); }
+  50% { box-shadow: 0 0 32px rgba(255, 77, 94, 0.85), inset 0 0 18px rgba(255, 77, 94, 0.45); }
+}
+@keyframes voice-ring {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+@keyframes voice-rot {
+  to { transform: rotate(360deg); }
 }
 
 .orbit-menu {
@@ -2284,6 +2550,18 @@ tbody .habit-name-col {
     padding: calc(env(safe-area-inset-top, 0px) + 64px) 20px
       calc(env(safe-area-inset-bottom, 0px) + 100px);
     overflow-x: hidden;
+  }
+
+  /* tabelas: colunas pelo conteúdo + rolagem horizontal em vez de espremer */
+  .ProseMirror table {
+    table-layout: auto;
+    width: max-content;
+    min-width: 100%;
+  }
+  .ProseMirror th,
+  .ProseMirror td {
+    min-width: 124px;
+    white-space: normal;
   }
 
   /* sobe título/subtítulo (centro do texto) e o header de hábitos full-width */

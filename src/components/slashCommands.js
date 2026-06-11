@@ -39,18 +39,42 @@ const ITEMS = [
       c.run() // remove o "/link"
       window.dispatchEvent(new CustomEvent('nova:add-link'))
     } },
-  { title: 'Gerar com IA', subtitle: 'Escreve com o Gemini', icon: '✨',
-    keywords: 'ia ai gemini gerar escrever texto',
+  { title: 'Gerar com IA', subtitle: 'Escreve com a IA', icon: '✨',
+    keywords: 'ia ai gerar escrever texto gemini groq cerebras',
     run: (c) => {
       c.run()
       window.dispatchEvent(new CustomEvent('nova:ai-generate'))
     } },
+  { title: 'Gerar com voz', subtitle: 'Fale e a IA escreve', icon: '🎙️',
+    keywords: 'voz audio falar microfone ditar gravar transcrever',
+    run: (c) => {
+      c.run()
+      window.dispatchEvent(new CustomEvent('nova:ai-voice'))
+    } },
 ]
+
+// pontua cada item pela relevância à busca (título e palavras-chave),
+// pra que "ia"/"ai" tragam "Gerar com IA" antes de itens que apenas contêm
+// o trecho (ex.: "diaria" no marcador de progresso).
+function scoreItem(item, q) {
+  const title = item.title.toLowerCase()
+  const tokens = item.keywords.toLowerCase().split(/\s+/)
+  if (title === q) return 100
+  if (title.startsWith(q)) return 80
+  if (tokens.some((k) => k === q)) return 70 // palavra-chave exata
+  if (tokens.some((k) => k.startsWith(q))) return 50
+  if (title.includes(q)) return 30
+  if (tokens.some((k) => k.includes(q))) return 10
+  return -1
+}
 
 function filterItems(query) {
   const q = (query || '').toLowerCase().trim()
   if (!q) return ITEMS
-  return ITEMS.filter((i) => (i.title + ' ' + i.keywords).toLowerCase().includes(q))
+  return ITEMS.map((i, idx) => ({ i, idx, s: scoreItem(i, q) }))
+    .filter((x) => x.s >= 0)
+    .sort((a, b) => b.s - a.s || a.idx - b.idx) // empate: mantém ordem original
+    .map((x) => x.i)
 }
 
 export const SlashCommands = Extension.create({

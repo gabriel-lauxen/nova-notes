@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useTheme } from "../context/ThemeContext";
 import { hexToHsl } from "../theme/palette";
+import { getVoiceLevel } from "../lib/voiceLevel";
 
 // Campo de partículas em <canvas> 2D, mas com matemática pseudo-3D.
 // As formas são geradas no espaço 3D (centradas na origem) e ficam num disco.
@@ -131,7 +132,11 @@ function buildTorus(R) {
     const u = Math.random() * TAU;
     const v = Math.random() * TAU;
     const rr = Rmaj + Rmin * Math.cos(v);
-    pts.push({ x: rr * Math.cos(u), y: Rmin * Math.sin(v), z: rr * Math.sin(u) });
+    pts.push({
+      x: rr * Math.cos(u),
+      y: Rmin * Math.sin(v),
+      z: rr * Math.sin(u),
+    });
   }
   return pts;
 }
@@ -250,7 +255,10 @@ export default function JarvisCore() {
       // e, se estiver arrastando, também gira/inclina a cena
       if (dragging) {
         userRot += (e.clientX - lastX) * 0.006;
-        userTilt = Math.max(-0.5, Math.min(1.45, userTilt + (e.clientY - lastY) * 0.004));
+        userTilt = Math.max(
+          -0.5,
+          Math.min(1.45, userTilt + (e.clientY - lastY) * 0.004),
+        );
         lastX = e.clientX;
         lastY = e.clientY;
       }
@@ -283,6 +291,9 @@ export default function JarvisCore() {
     const render = () => {
       if (!dragging) t += 0.016; // pausa o giro automático enquanto o dedo controla
       ctx.clearRect(0, 0, W, H);
+      // amplitude da voz (0..1) -> faz a galáxia reagir como uma onda sonora
+      const amp = getVoiceLevel();
+      const pulse = 1 + amp * 0.2; // leve expansão radial conforme o volume
       // inclinação = base + ajuste manual (arrasto vertical)
       const cosI = Math.cos(INCL + userTilt);
       const sinI = Math.sin(INCL + userTilt);
@@ -318,9 +329,10 @@ export default function JarvisCore() {
             : scene.speed * t) + userRot;
         const cs = Math.cos(spin),
           sn = Math.sin(spin);
-        const rx = p.bx * cs + p.bz * sn;
-        const rz = -p.bx * sn + p.bz * cs;
-        const ry = p.by;
+        // a voz expande o disco radialmente (respiração)
+        const rx = (p.bx * cs + p.bz * sn) * pulse;
+        const rz = (-p.bx * sn + p.bz * cs) * pulse;
+        const ry = p.by * pulse;
 
         // inclinação do disco (tilt em torno de X)
         const y2 = ry * cosI - rz * sinI;
@@ -352,13 +364,31 @@ export default function JarvisCore() {
 
         // órbita local (nunca fica 100% parado)
         const ox = Math.cos(t * p.orbitSpeed + p.phase) * p.orbitR;
-        const oy = Math.sin(t * p.orbitSpeed + p.phase) * p.orbitR;
+        let oy = Math.sin(t * p.orbitSpeed + p.phase) * p.orbitR;
+
+        // onda sonora: ondulação VERTICAL grande e suave conforme a voz.
+        // baseada na posição x -> pontos vizinhos sobem/descem juntos
+        // (uns pra cima, outros pra baixo); baixa frequência = movimento fluido.
+        if (amp) {
+          const A = maxR * 0.32; // amplitude grande/perceptível
+          // centro se move mais que as bordas (rad = distância do centro do disco)
+          const centerW = 1 - 0.6 * Math.min(1, rad / maxR);
+          const waveY =
+            A *
+            amp *
+            centerW *
+            (0.62 * Math.sin(p.x * 0.009 + t * 1.2) +
+              0.38 * Math.sin(p.x * 0.02 - t * 0.8 + p.phase * 0.5));
+          oy += waveY;
+        }
 
         // profundidade -> tamanho e brilho (frente brilha, trás apaga)
         const depth = clamp((scale - 0.7) / 1.0, 0, 1);
-        const size = p.size * (0.5 + depth * 1.1);
+        const size = p.size * (0.5 + depth * 1.1) * (1 + amp * 1.2);
         const alpha =
-          (0.28 + depth * 0.62) * (0.75 + Math.sin(t * 1.6 + p.tw) * 0.25);
+          (0.28 + depth * 0.62) *
+          (0.75 + Math.sin(t * 1.6 + p.tw) * 0.25) *
+          (1 + amp * 0.6);
         const lum = mode === "light" ? p.lum - 18 : p.lum;
         ctx.fillStyle = `hsl(${h} ${sat}% ${lum}% / ${clamp(alpha, 0, 1)})`;
         ctx.beginPath();

@@ -2,16 +2,40 @@ import { useState } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import { FONTS, PRESET_COLORS } from '../theme/palette'
-import { getGeminiKey, setGeminiKey } from '../lib/ai'
-import { Moon, Sun, LogOut, Check, Sparkles } from 'lucide-react'
+import {
+  getGeminiKey, setGeminiKey, getGroqKey, setGroqKey,
+  getCerebrasKey, setCerebrasKey, getProvider, setProvider,
+} from '../lib/ai'
+import { Moon, Sun, LogOut, Check, Sparkles, ChevronDown } from 'lucide-react'
+
+const PROVIDERS = [
+  { id: 'groq', label: 'Groq' },
+  { id: 'cerebras', label: 'Cerebras' },
+  { id: 'gemini', label: 'Gemini' },
+]
 
 export default function Settings() {
   const { settings, setColor, setFont, setMode } = useTheme()
-  const { user, signOut, updateName, updateGeminiKey } = useAuth()
+  const {
+    user, signOut, updateName,
+    updateGeminiKey, updateGroqKey, updateCerebrasKey, updateAiProvider,
+  } = useAuth()
   const [name, setName] = useState(user?.user_metadata?.name || '')
   const [nameStatus, setNameStatus] = useState('idle') // idle | saving | saved
+  const [keysOpen, setKeysOpen] = useState(false)
+  const [provider, setProviderState] = useState(getProvider())
   const [gemKey, setGemKey] = useState(getGeminiKey())
   const [gemStatus, setGemStatus] = useState('idle')
+  const [groqKey, setGroqKeyState] = useState(getGroqKey())
+  const [groqStatus, setGroqStatus] = useState('idle')
+  const [cereKey, setCereKey] = useState(getCerebrasKey())
+  const [cereStatus, setCereStatus] = useState('idle')
+
+  const chooseProvider = async (p) => {
+    setProviderState(p)
+    setProvider(p)
+    if (user) await updateAiProvider(p)
+  }
 
   const saveGemKey = async () => {
     const k = gemKey.trim()
@@ -19,6 +43,22 @@ export default function Settings() {
     if (user) await updateGeminiKey(k) // salva na conta (Supabase)
     setGemStatus('saved')
     setTimeout(() => setGemStatus('idle'), 1500)
+  }
+
+  const saveGroqKey = async () => {
+    const k = groqKey.trim()
+    setGroqKey(k)
+    if (user) await updateGroqKey(k)
+    setGroqStatus('saved')
+    setTimeout(() => setGroqStatus('idle'), 1500)
+  }
+
+  const saveCereKey = async () => {
+    const k = cereKey.trim()
+    setCerebrasKey(k)
+    if (user) await updateCerebrasKey(k)
+    setCereStatus('saved')
+    setTimeout(() => setCereStatus('idle'), 1500)
   }
 
   const saveName = async () => {
@@ -33,6 +73,31 @@ export default function Settings() {
     <div className="panel" style={{ maxWidth: 720 }}>
       <div className="panel-title">Configurações</div>
       <div className="panel-sub">Deixe o NOVA com a sua cara. As mudanças são aplicadas e salvas na hora.</div>
+
+      {user && (
+        <div className="settings-row">
+          <label>Conta</label>
+          <span className="hint">Conectado como <strong>{user.email}</strong></span>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', maxWidth: 360 }}>
+            <input
+              className="field"
+              value={name}
+              placeholder="Seu nome"
+              onChange={(e) => setName(e.target.value)}
+              onBlur={saveName}
+              onKeyDown={(e) => e.key === 'Enter' && saveName()}
+            />
+            <button className="btn-primary" onClick={saveName} disabled={nameStatus === 'saving'}>
+              {nameStatus === 'saved' ? <Check size={15} /> : 'Salvar'}
+            </button>
+          </div>
+          <div className="chip-row" style={{ marginTop: 12 }}>
+            <button className="chip" onClick={() => signOut()}>
+              <LogOut size={14} style={{ verticalAlign: 'middle' }} /> Sair
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="settings-row">
         <label>Cor do tema</label>
@@ -95,9 +160,78 @@ export default function Settings() {
       </div>
 
       <div className="settings-row">
-        <label><Sparkles size={14} style={{ verticalAlign: 'middle', color: 'var(--accent)' }} /> IA (Gemini)</label>
+        <label><Sparkles size={14} style={{ verticalAlign: 'middle', color: 'var(--accent)' }} /> Modelo de IA</label>
         <span className="hint">
-          Cole sua chave grátis do Gemini para usar o "Gerar com IA" no menu /. Pegue em{' '}
+          Escolha qual provedor usar para gerar texto. Se ele atingir o limite, os outros entram como reserva
+          automaticamente. A transcrição de voz usa sempre o Groq.
+        </span>
+        <div className="chip-row">
+          {PROVIDERS.map((p) => (
+            <button
+              key={p.id}
+              className={'chip' + (provider === p.id ? ' active' : '')}
+              onClick={() => chooseProvider(p.id)}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="ai-keys">
+      <button className="ai-keys-toggle" onClick={() => setKeysOpen((o) => !o)}>
+        <Sparkles size={14} style={{ verticalAlign: 'middle' }} /> AI API keys
+        <ChevronDown size={16} className={'ai-keys-arrow' + (keysOpen ? ' open' : '')} />
+      </button>
+      <div className={'ai-keys-content' + (keysOpen ? ' open' : '')}>
+      <div className="ai-keys-inner">
+
+      <div className="settings-row">
+        <label>Chave Groq</label>
+        <span className="hint">
+          Rápido e usado também para transcrever voz. Pegue grátis em{' '}
+          <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a>. Fica salva só no seu navegador.
+        </span>
+        <div style={{ display: 'flex', gap: 8, maxWidth: 460 }}>
+          <input
+            className="field"
+            type="password"
+            placeholder="gsk_…"
+            value={groqKey}
+            onChange={(e) => setGroqKeyState(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && saveGroqKey()}
+          />
+          <button className="btn-primary" onClick={saveGroqKey}>
+            {groqStatus === 'saved' ? <Check size={15} /> : 'Salvar'}
+          </button>
+        </div>
+      </div>
+
+      <div className="settings-row">
+        <label>Chave Cerebras</label>
+        <span className="hint">
+          Mais volume diário e ótimo para textos longos. Pegue grátis em{' '}
+          <a href="https://cloud.cerebras.ai" target="_blank" rel="noopener">cloud.cerebras.ai</a>. Fica salva só no seu navegador.
+        </span>
+        <div style={{ display: 'flex', gap: 8, maxWidth: 460 }}>
+          <input
+            className="field"
+            type="password"
+            placeholder="csk-…"
+            value={cereKey}
+            onChange={(e) => setCereKey(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && saveCereKey()}
+          />
+          <button className="btn-primary" onClick={saveCereKey}>
+            {cereStatus === 'saved' ? <Check size={15} /> : 'Salvar'}
+          </button>
+        </div>
+      </div>
+
+      <div className="settings-row">
+        <label>Chave Gemini</label>
+        <span className="hint">
+          Contexto gigante (1M tokens). Pegue grátis em{' '}
           <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. Fica salva só no seu navegador.
         </span>
         <div style={{ display: 'flex', gap: 8, maxWidth: 460 }}>
@@ -115,30 +249,9 @@ export default function Settings() {
         </div>
       </div>
 
-      {user && (
-        <div className="settings-row">
-          <label>Conta</label>
-          <span className="hint">Conectado como <strong>{user.email}</strong></span>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', maxWidth: 360 }}>
-            <input
-              className="field"
-              value={name}
-              placeholder="Seu nome"
-              onChange={(e) => setName(e.target.value)}
-              onBlur={saveName}
-              onKeyDown={(e) => e.key === 'Enter' && saveName()}
-            />
-            <button className="btn-primary" onClick={saveName} disabled={nameStatus === 'saving'}>
-              {nameStatus === 'saved' ? <Check size={15} /> : 'Salvar'}
-            </button>
-          </div>
-          <div className="chip-row" style={{ marginTop: 12 }}>
-            <button className="chip" onClick={() => signOut()}>
-              <LogOut size={14} style={{ verticalAlign: 'middle' }} /> Sair
-            </button>
-          </div>
-        </div>
-      )}
+      </div>
+      </div>
+      </div>
     </div>
   )
 }

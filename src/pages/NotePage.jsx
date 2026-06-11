@@ -17,7 +17,8 @@ import EmojiPicker from "../components/EmojiPicker";
 import AIDialog from "../components/AIDialog";
 import { RingLoader } from "react-spinners";
 import { marked } from "marked";
-import { generateNote } from "../lib/ai";
+import { generateNote, transcribe } from "../lib/ai";
+import { recordVoice } from "../lib/recorder";
 import { notesApi } from "../lib/store";
 
 // cor primária atual (para o spinner)
@@ -54,6 +55,9 @@ export default function NotePage({ onChanged, onDeleted }) {
   const [aiOpen, setAiOpen] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
   const [aiError, setAiError] = useState(null);
+  const [recording, setRecording] = useState(false);
+  const voiceStopRef = useRef(null);
+  const runVoiceRef = useRef(null);
 
   const openHeadMenu = (e) => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -82,11 +86,14 @@ export default function NotePage({ onChanged, onDeleted }) {
   useEffect(() => {
     const openLink = () => setLinkOpen(true);
     const openAi = () => setAiOpen(true);
+    const openVoice = () => runVoiceRef.current?.();
     window.addEventListener("nova:add-link", openLink);
     window.addEventListener("nova:ai-generate", openAi);
+    window.addEventListener("nova:ai-voice", openVoice);
     return () => {
       window.removeEventListener("nova:add-link", openLink);
       window.removeEventListener("nova:ai-generate", openAi);
+      window.removeEventListener("nova:ai-voice", openVoice);
     };
   }, []);
 
@@ -122,6 +129,49 @@ export default function NotePage({ onChanged, onDeleted }) {
       setAiBusy(false);
     }
   };
+
+  // grava a voz, transcreve e gera o texto no cursor (item "/" Gerar com voz)
+  const runVoice = async () => {
+    // posiciona o indicador no cursor (igual ao "Gerando")
+    const ed0 = editorRef.current;
+    if (ed0 && bodyRef.current) {
+      ed0.chain().focus().scrollIntoView().run();
+      try {
+        const c = ed0.view.coordsAtPos(ed0.state.selection.from);
+        const r = bodyRef.current.getBoundingClientRect();
+        setAiPos({ top: c.top - r.top, left: c.left - r.left });
+      } catch {
+        setAiPos({ top: 0, left: 0 });
+      }
+    }
+    setAiError(null);
+    setRecording(true);
+    let blob;
+    try {
+      const rec = recordVoice({});
+      voiceStopRef.current = rec.stop;
+      blob = await rec.promise;
+    } catch {
+      setRecording(false);
+      setAiError("Não consegui acessar o microfone.");
+      return;
+    }
+    setRecording(false);
+    setAiBusy(true);
+    try {
+      const text = await transcribe(blob);
+      if (!text) throw new Error("Não entendi o áudio. Tente de novo.");
+      const { content } = await generateNote(text, false);
+      const ed = editorRef.current;
+      if (ed && content)
+        ed.chain().focus().insertContent(marked.parse(content)).run();
+    } catch (e) {
+      setAiError(e.message || "Falha ao gerar.");
+    } finally {
+      setAiBusy(false);
+    }
+  };
+  runVoiceRef.current = runVoice;
 
   const queueSave = (patch) => {
     setNote((n) => ({ ...n, ...patch }));
@@ -373,9 +423,20 @@ export default function NotePage({ onChanged, onDeleted }) {
         <div
           ref={bodyRef}
           onClick={onBodyClick}
-          className={aiBusy ? "generating" : ""}
+          className={"note-body" + (aiBusy ? " generating" : "")}
           style={{ position: "relative" }}
         >
+          {recording && (
+            <button
+              className="ai-listening"
+              style={{ top: aiPos.top, left: aiPos.left }}
+              onClick={() => voiceStopRef.current?.()}
+              title="Parar e gerar"
+            >
+              <span className="ai-listening-text">Ouvindo</span>
+              <span className="ai-listening-dot" />
+            </button>
+          )}
           {aiBusy && (
             <div className="ai-generating" style={{ top: aiPos.top, left: aiPos.left }}>
               <span className="ai-generating-text">Gerando</span>
