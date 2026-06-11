@@ -42,6 +42,16 @@ export default function App() {
       else edge = null
       sx = t.clientX; sy = t.clientY; st = Date.now()
     }
+    // bloqueia o "voltar/avançar" nativo do iOS quando o swipe começa na borda
+    const onMove = (e) => {
+      if (!edge) return
+      const t = e.touches[0]
+      const dx = t.clientX - sx
+      const dy = t.clientY - sy
+      if (Math.abs(dx) > 6 && Math.abs(dx) > Math.abs(dy) && e.cancelable) {
+        e.preventDefault()
+      }
+    }
     const onEnd = (e) => {
       if (!edge) return
       const t = e.changedTouches[0]
@@ -57,9 +67,11 @@ export default function App() {
       edge = null
     }
     window.addEventListener('touchstart', onStart, { passive: true })
+    window.addEventListener('touchmove', onMove, { passive: false })
     window.addEventListener('touchend', onEnd, { passive: true })
     return () => {
       window.removeEventListener('touchstart', onStart)
+      window.removeEventListener('touchmove', onMove)
       window.removeEventListener('touchend', onEnd)
     }
   }, [navigate])
