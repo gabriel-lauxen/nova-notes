@@ -316,6 +316,13 @@ export default function Home({
   };
 
   const finishRecording = async (chunks, type) => {
+    // clicar no core durante a gravação cancela (não cria nota)
+    if (media.current?.cancelled) {
+      media.current = null;
+      setRecState("idle");
+      flyVoiceBack();
+      return;
+    }
     setRecState("processing");
     try {
       const blob = new Blob(chunks, { type: type || "audio/webm" });
@@ -440,9 +447,25 @@ export default function Home({
     } catch {}
   };
 
+  // clicar no core enquanto grava CANCELA (a parada por silêncio é que cria a nota)
+  const cancelRecording = () => {
+    const m = media.current;
+    if (!m) return;
+    m.cancelled = true;
+    setVoiceActive(false);
+    cancelAnimationFrame(m.ampRaf);
+    try {
+      m.recorder.state !== "inactive" && m.recorder.stop();
+    } catch {}
+    m.stream.getTracks().forEach((t) => t.stop());
+    try {
+      m.audioCtx.close();
+    } catch {}
+  };
+
   const onVoiceClick = () => {
     if (recState === "idle") startRecording();
-    else if (recState === "recording") stopRecording();
+    else if (recState === "recording") cancelRecording();
     // connecting / processing: ignora cliques
   };
 
@@ -531,7 +554,7 @@ export default function Home({
           disabled={recState === "processing" || recState === "connecting"}
           title={
             recState === "recording"
-              ? "Parar e gerar nota"
+              ? "Toque para cancelar (para sozinho no silêncio)"
               : recState === "connecting"
                 ? "Conectando o microfone…"
                 : recState === "processing"

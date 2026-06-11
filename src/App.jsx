@@ -63,8 +63,13 @@ export default function App() {
       const fast = dt < 500 && Math.abs(dx) > Math.abs(dy) * 1.5
       if (edge === 'left' && dx > 60 && fast) setNavOpen(true)
       else if (edge === 'right' && dx < -60 && fast) {
-        navigate('/')
-        setPendingVoice(true)
+        // dentro de uma nota: gesto direito refatora gravando a instrução
+        if (window.location.pathname.startsWith('/note/')) {
+          window.dispatchEvent(new CustomEvent('nova:refactor-voice'))
+        } else {
+          navigate('/')
+          setPendingVoice(true)
+        }
       }
       edge = null
     }

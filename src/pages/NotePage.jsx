@@ -13,6 +13,8 @@ import {
   Tag,
   ListChecks,
   Share2,
+  Mic,
+  Square,
 } from "lucide-react";
 import Editor from "../components/Editor";
 import Spinner from "../components/Spinner";
@@ -104,8 +106,84 @@ export default function NotePage({ onChanged, onDeleted }) {
     const v = parseInt(localStorage.getItem("nova-note-font") || "2", 10);
     return Number.isFinite(v) && v >= 0 && v < FONT_SCALES.length ? v : 2;
   });
+  const [refRec, setRefRec] = useState("idle"); // idle | recording | transcribing
   const voiceStopRef = useRef(null);
+  const refStopRef = useRef(null);
   const runVoiceRef = useRef(null);
+  const runRefactorVoiceRef = useRef(null);
+
+  // botão de microfone flutuante (arrastável, posição salva no localStorage)
+  const [micPos, setMicPos] = useState(() => {
+    try {
+      const s = JSON.parse(localStorage.getItem("nova-mic-pos") || "null");
+      if (s && typeof s.x === "number") return s;
+    } catch {}
+    return null;
+  });
+  useEffect(() => {
+    setMicPos((p) => {
+      if (p == null)
+        return { x: window.innerWidth - 74, y: window.innerHeight - 110 };
+      // mantém dentro da tela atual
+      return {
+        x: Math.max(8, Math.min(window.innerWidth - 58, p.x)),
+        y: Math.max(8, Math.min(window.innerHeight - 58, p.y)),
+      };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const [micDragging, setMicDragging] = useState(false);
+  const micDrag = useRef({ active: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 });
+  const onMicDown = (e) => {
+    e.preventDefault();
+    const d = micDrag.current;
+    d.active = true;
+    d.moved = false;
+    d.sx = e.clientX;
+    d.sy = e.clientY;
+    d.ox = micPos?.x ?? 0;
+    d.oy = micPos?.y ?? 0;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+  const onMicMove = (e) => {
+    const d = micDrag.current;
+    if (!d.active) return;
+    const dx = e.clientX - d.sx,
+      dy = e.clientY - d.sy;
+    if (!d.moved && Math.hypot(dx, dy) > 6) {
+      d.moved = true;
+      setMicDragging(true); // desliga a transição enquanto segue o dedo
+    }
+    if (d.moved) {
+      setMicPos({
+        x: Math.max(8, Math.min(window.innerWidth - 58, d.ox + dx)),
+        y: Math.max(8, Math.min(window.innerHeight - 58, d.oy + dy)),
+        dock: null,
+      });
+    }
+  };
+  const onMicUp = (e) => {
+    const d = micDrag.current;
+    if (!d.active) return;
+    d.active = false;
+    setMicDragging(false); // religa a transição -> o snap pro canto anima
+    try {
+      e.currentTarget.releasePointerCapture?.(e.pointerId);
+    } catch {}
+    if (d.moved) {
+      // encostou numa borda lateral -> vira uma abinha pra não atrapalhar
+      let dock = null;
+      if (micPos.x <= 14) dock = "left";
+      else if (micPos.x >= window.innerWidth - 58 - 14) dock = "right";
+      const next = { ...micPos, dock };
+      setMicPos(next);
+      try {
+        localStorage.setItem("nova-mic-pos", JSON.stringify(next));
+      } catch {}
+    } else {
+      runRefactorVoiceRef.current?.(); // toque (sem arrastar) -> grava/refatora
+    }
+  };
 
   useEffect(() => {
     localStorage.setItem("nova-note-font", String(fontIdx));
@@ -141,17 +219,20 @@ export default function NotePage({ onChanged, onDeleted }) {
     const openVoice = () => runVoiceRef.current?.();
     const openRefactor = () => setRefactorOpen(true);
     const openAgent = () => setAgentOpen(true);
+    const refVoice = () => runRefactorVoiceRef.current?.();
     window.addEventListener("nova:add-link", openLink);
     window.addEventListener("nova:ai-generate", openAi);
     window.addEventListener("nova:ai-voice", openVoice);
     window.addEventListener("nova:ai-refactor", openRefactor);
     window.addEventListener("nova:ai-agent", openAgent);
+    window.addEventListener("nova:refactor-voice", refVoice);
     return () => {
       window.removeEventListener("nova:add-link", openLink);
       window.removeEventListener("nova:ai-generate", openAi);
       window.removeEventListener("nova:ai-voice", openVoice);
       window.removeEventListener("nova:ai-refactor", openRefactor);
       window.removeEventListener("nova:ai-agent", openAgent);
+      window.removeEventListener("nova:refactor-voice", refVoice);
     };
   }, []);
 
@@ -188,25 +269,32 @@ export default function NotePage({ onChanged, onDeleted }) {
     }
   };
 
-  // refatora: pega o conteúdo atual da nota e reescreve conforme o pedido
-  const runRefactor = async (userPrompt) => {
+  // refatora: pega o conteúdo atual da nota e reescreve conforme o pedido.
+  // opts.silent = não mostra o "Gerando" no texto (usado no fluxo por voz)
+  const runRefactor = async (userPrompt, opts = {}) => {
+    const silent = !!opts.silent;
     setRefactorOpen(false);
     setAiError(null);
     const ed = editorRef.current;
     if (!ed) return;
     const current = ed.storage.markdown.getMarkdown();
-    // posiciona o "Gerando" no cursor
-    if (bodyRef.current) {
+    if (!silent && bodyRef.current) {
+      // posiciona o "Gerando" no cursor (clampado pra não sair da tela)
       ed.chain().focus().scrollIntoView().run();
       try {
         const c = ed.view.coordsAtPos(ed.state.selection.from);
         const r = bodyRef.current.getBoundingClientRect();
-        setAiPos({ top: c.top - r.top, left: c.left - r.left });
+        setAiPos({
+          top: Math.max(0, c.top - r.top),
+          left: Math.max(0, Math.min(c.left - r.left, r.width - 150)),
+        });
       } catch {
         setAiPos({ top: 0, left: 0 });
       }
+    } else if (silent) {
+      setAiPos({ top: 0, left: 0 });
     }
-    setAiBusy(true);
+    if (!silent) setAiBusy(true);
     try {
       const prompt =
         "Abaixo está o conteúdo atual de uma nota em Markdown. Reescreva/refatore o " +
@@ -216,11 +304,23 @@ export default function NotePage({ onChanged, onDeleted }) {
         "\n\n--- Conteúdo atual ---\n" +
         (current || "(vazio)");
       const { content } = await generateNote(prompt, false);
-      if (content) ed.chain().focus().setContent(content).run();
+      if (content) {
+        ed.chain().focus().setContent(content).run();
+        // setContent não dispara onUpdate -> salva manualmente
+        handleContent(ed.storage.markdown.getMarkdown());
+        // anima o texto novo aparecendo
+        const pm = bodyRef.current?.querySelector(".ProseMirror");
+        if (pm) {
+          pm.classList.remove("refactor-in");
+          void pm.offsetWidth; // reinicia a animação
+          pm.classList.add("refactor-in");
+          setTimeout(() => pm.classList.remove("refactor-in"), 650);
+        }
+      }
     } catch (e) {
       setAiError(e.message || "Falha ao refatorar.");
     } finally {
-      setAiBusy(false);
+      if (!silent) setAiBusy(false);
     }
   };
 
@@ -260,6 +360,46 @@ export default function NotePage({ onChanged, onDeleted }) {
       setAiBusy(false);
     }
   };
+
+  // gesto direito na nota: grava a instrução (para no silêncio) e refatora
+  const runRefactorVoice = async () => {
+    if (readMode) return;
+    if (refRec === "recording") {
+      refStopRef.current?.();
+      return;
+    }
+    if (refRec !== "idle") return;
+    setAiError(null);
+    setRefRec("recording");
+    let blob;
+    try {
+      const r = recordVoice({});
+      refStopRef.current = r.stop;
+      blob = await r.promise;
+    } catch {
+      setRefRec("idle");
+      setAiError("Não consegui acessar o microfone.");
+      return;
+    }
+    setRefRec("transcribing");
+    let text = "";
+    try {
+      text = await transcribe(blob);
+    } catch (e) {
+      setRefRec("idle");
+      setAiError(e.message || "Falha ao transcrever.");
+      return;
+    }
+    if (!text) {
+      setRefRec("idle");
+      return;
+    }
+    // gera sem o "Gerando" no texto — só o spinner no botão do mic
+    setRefRec("generating");
+    await runRefactor(text, { silent: true });
+    setRefRec("idle");
+  };
+  runRefactorVoiceRef.current = runRefactorVoice;
 
   // grava a voz, transcreve e gera o texto no cursor (item "/" Gerar com voz)
   const runVoice = async () => {
@@ -690,6 +830,38 @@ export default function NotePage({ onChanged, onDeleted }) {
           )}
         </div>
       </div>
+
+      {!readMode && micPos && (
+        <button
+          className={
+            "note-mic " +
+            refRec +
+            (micPos.dock ? " dock-" + micPos.dock : "") +
+            (micDragging ? " dragging" : "")
+          }
+          style={
+            micPos.dock ? { top: micPos.y } : { left: micPos.x, top: micPos.y }
+          }
+          onPointerDown={onMicDown}
+          onPointerMove={onMicMove}
+          onPointerUp={onMicUp}
+          title={
+            refRec === "recording"
+              ? "Gravando — toque pra refatorar"
+              : refRec === "transcribing"
+                ? "Transcrevendo…"
+                : "Refatorar por voz (arraste pra mover)"
+          }
+        >
+          {refRec === "recording" ? (
+            <Square size={18} fill="currentColor" />
+          ) : refRec === "transcribing" || refRec === "generating" ? (
+            <RingLoader color={accentColor()} size={26} />
+          ) : (
+            <Mic size={micPos.dock ? 16 : 20} />
+          )}
+        </button>
+      )}
 
       {headMenu &&
         createPortal(
