@@ -343,7 +343,7 @@ a:hover {
   box-shadow: 0 0 8px rgba(255, 77, 94, 0.9);
   animation: voice-pulse 1.1s ease-in-out infinite;
 }
-:root[data-mode='light'] .ai-listening-text {
+:root[data-mode="light"] .ai-listening-text {
   text-shadow: none;
 }
 /* loader holográfico: anel com rastro em conic-gradient + glow */
@@ -1147,10 +1147,15 @@ a:hover {
   background:
     linear-gradient(to right, var(--bg-elev) 30%, transparent),
     linear-gradient(to left, var(--bg-elev) 30%, transparent) 100% 0,
-    radial-gradient(farthest-side at 0 50%, rgba(0,0,0,0.12), transparent),
-    radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,0.12), transparent) 100% 0;
+    radial-gradient(farthest-side at 0 50%, rgba(0, 0, 0, 0.12), transparent),
+    radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, 0.12), transparent)
+      100% 0;
   background-repeat: no-repeat;
-  background-size: 28px 100%, 28px 100%, 14px 100%, 14px 100%;
+  background-size:
+    28px 100%,
+    28px 100%,
+    14px 100%,
+    14px 100%;
   background-attachment: local, local, scroll, scroll;
 }
 .ProseMirror table {
@@ -1769,7 +1774,7 @@ tbody .habit-name-col {
   color: var(--accent);
   text-shadow: 0 0 8px var(--accent-glow);
 }
-:root[data-mode='light'] .ai-keys-toggle {
+:root[data-mode="light"] .ai-keys-toggle {
   text-shadow: none;
 }
 .ai-keys-arrow {
@@ -1782,7 +1787,9 @@ tbody .habit-name-col {
 .ai-keys-content {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 0.38s ease, opacity 0.3s ease;
+  transition:
+    grid-template-rows 0.38s ease,
+    opacity 0.3s ease;
   opacity: 0;
 }
 .ai-keys-content.open {
@@ -1866,16 +1873,22 @@ tbody .habit-name-col {
 .home canvas {
   position: absolute;
   inset: 0;
-  z-index: 2; /* galáxia na frente das estrelas de fundo (Starfield) */
+  z-index: 0; /* galáxia na frente das estrelas de fundo (Starfield) */
 }
-/* durante o processamento: zoom rápido e gigante no core, que voa pra fora da tela */
-.home-zoom canvas {
-  transform: scale(22);
-  opacity: 0;
-  transition: transform 0.6s cubic-bezier(0.6, 0, 1, 1), opacity 0.55s ease-in 0.18s;
+/* enquanto carrega: o core fica um pouco menor e continua girando no centro */
+.home-loading canvas {
+  transform: scale(0.72);
+  transition: transform 0.5s ease;
 }
-.home-zoom .home-overlay,
-.home-zoom .home-clock {
+/* no fim: as partículas implodem pro centro (feito no canvas via JS).
+   o canvas mantém a escala do carregar pra não dar salto. */
+.home-implode canvas {
+  transform: scale(0.72);
+}
+.home-loading .home-overlay,
+.home-loading .home-clock,
+.home-implode .home-overlay,
+.home-implode .home-clock {
   opacity: 0 !important;
   transition: opacity 0.4s ease;
 }
@@ -1884,8 +1897,14 @@ tbody .habit-name-col {
   animation: note-fade 0.6s ease both;
 }
 @keyframes note-fade {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 .home-overlay {
   position: absolute;
@@ -2043,7 +2062,9 @@ tbody .habit-name-col {
     0 0 18px var(--accent-glow),
     inset 0 0 12px color-mix(in srgb, var(--accent) 18%, transparent);
   cursor: pointer;
-  transition: box-shadow 0.25s ease, transform 0.15s ease;
+  transition:
+    box-shadow 0.25s ease,
+    transform 0.15s ease;
 }
 .voice-btn svg {
   filter: drop-shadow(0 0 6px var(--accent-glow));
@@ -2068,28 +2089,65 @@ tbody .habit-name-col {
 
 /* "jarvis core": núcleo de espinhos neon radiais contra-girando + estrela central */
 .voice-core {
-  width: 200px;
-  height: 200px;
-  flex: 0 0 auto; /* NÃO encolher dentro do botão flex (era isso que deixava pequeno) */
+  width: 190px;
+  height: 190px;
+  flex: 0 0 auto; /* NÃO encolher dentro do botão flex */
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  perspective: 800px; /* dá profundidade 3D ao tombamento */
-}
-.voice-core svg {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  filter: drop-shadow(0 0 3px var(--accent-glow));
-  transform-style: preserve-3d;
-  animation: vc-tilt 9s ease-in-out infinite; /* tomba/gira levemente em 3D */
+  perspective: 620px;
 }
 @media (max-width: 760px) {
-  .voice-core { width: 104px; height: 104px; }
+  .voice-core {
+    width: 94px;
+    height: 94px;
+  }
 }
-@keyframes vc-tilt {
-  0%, 100% { transform: rotateX(26deg) rotateZ(-6deg); }
-  50% { transform: rotateX(38deg) rotateZ(8deg); }
+
+/* formas 3D: dois cubos wireframe girando em eixos diferentes */
+.vc3-scene {
+  position: relative;
+  width: 66px;
+  height: 66px;
+  transform-style: preserve-3d;
+}
+.vc3 {
+  position: absolute;
+  transform-style: preserve-3d;
+}
+.vc3-a {
+  inset: 0;
+  --h: 33px;
+  animation: vc3-spin-a 7s linear infinite;
+}
+.vc3-b {
+  width: 36px;
+  height: 36px;
+  top: 15px;
+  left: 15px;
+  --h: 18px;
+  animation: vc3-spin-b 5s linear infinite;
+}
+.vf {
+  position: absolute;
+  inset: 0;
+  border: 1.4px solid var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+  background: color-mix(in srgb, var(--accent) 4%, transparent);
+}
+.vf-fr { transform: translateZ(var(--h)); }
+.vf-bk { transform: rotateY(180deg) translateZ(var(--h)); }
+.vf-rt { transform: rotateY(90deg) translateZ(var(--h)); }
+.vf-lf { transform: rotateY(-90deg) translateZ(var(--h)); }
+.vf-tp { transform: rotateX(90deg) translateZ(var(--h)); }
+.vf-bt { transform: rotateX(-90deg) translateZ(var(--h)); }
+@keyframes vc3-spin-a {
+  from { transform: rotateX(-18deg) rotateY(0deg); }
+  to { transform: rotateX(-18deg) rotateY(360deg); }
+}
+@keyframes vc3-spin-b {
+  from { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+  to { transform: rotateX(360deg) rotateY(-360deg) rotateZ(0deg); }
 }
 .vc-spike {
   fill: color-mix(in srgb, var(--accent) 14%, transparent);
@@ -2110,16 +2168,56 @@ tbody .habit-name-col {
 .vc-core-dot {
   fill: var(--accent);
 }
+/* anéis redondos */
+.vc-ring {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1;
+  opacity: 0.45;
+}
+.vc-ring-in {
+  opacity: 0.3;
+}
+/* hexágono girando em 3D (flip no eixo vertical = scaleX) */
+.vc-hex {
+  fill: color-mix(in srgb, var(--accent) 16%, transparent);
+  stroke: var(--accent);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: vc-hexspin 2.4s ease-in-out infinite;
+}
+.vc-hex2 {
+  animation-delay: -1.2s;
+  opacity: 0.6;
+}
+@keyframes vc-hexspin {
+  0% { transform: scaleX(1); }
+  50% { transform: scaleX(-1); }
+  100% { transform: scaleX(1); }
+}
 /* camadas giram em sentidos opostos; escala (voz) é aplicada no grupo interno */
-.vc-spin-a { animation: vc-rot 9s linear infinite; }
-.vc-spin-b { animation: vc-rot 6.5s linear infinite reverse; }
-.vc-spin-c { animation: vc-rot 12s linear infinite; }
-.vc-spin-a, .vc-spin-b, .vc-spin-c, .vc-scale {
+.vc-spin-a {
+  animation: vc-rot 9s linear infinite;
+}
+.vc-spin-b {
+  animation: vc-rot 6.5s linear infinite reverse;
+}
+.vc-spin-c {
+  animation: vc-rot 12s linear infinite;
+}
+.vc-spin-a,
+.vc-spin-b,
+.vc-spin-c,
+.vc-scale {
   transform-box: fill-box;
   transform-origin: center;
 }
 @keyframes vc-rot {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 .voice-btn.processing,
 .voice-btn.connecting {
@@ -2147,17 +2245,55 @@ tbody .habit-name-col {
   background: color-mix(in srgb, #ff4d5e 14%, var(--bg-elev));
   border: 1px solid color-mix(in srgb, #ff4d5e 45%, transparent);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.voice-err span {
+  flex: 1;
+  min-width: 0;
+}
+.voice-err button {
+  flex: none;
+  background: none;
+  border: none;
+  color: #ff8a95;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+  opacity: 0.8;
+}
+.voice-err button:hover {
+  opacity: 1;
 }
 @keyframes voice-pulse {
-  0%, 100% { box-shadow: 0 0 18px rgba(255, 77, 94, 0.5), inset 0 0 12px rgba(255, 77, 94, 0.28); }
-  50% { box-shadow: 0 0 32px rgba(255, 77, 94, 0.85), inset 0 0 18px rgba(255, 77, 94, 0.45); }
+  0%,
+  100% {
+    box-shadow:
+      0 0 18px rgba(255, 77, 94, 0.5),
+      inset 0 0 12px rgba(255, 77, 94, 0.28);
+  }
+  50% {
+    box-shadow:
+      0 0 32px rgba(255, 77, 94, 0.85),
+      inset 0 0 18px rgba(255, 77, 94, 0.45);
+  }
 }
 @keyframes voice-ring {
-  0% { transform: scale(1); opacity: 0.8; }
-  100% { transform: scale(1.9); opacity: 0; }
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
 }
 @keyframes voice-rot {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .orbit-menu {

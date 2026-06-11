@@ -1,9 +1,9 @@
-// Sinaliza o modo "hiperespaço" (estrelas viram riscos saindo do centro),
-// compartilhado entre a Home (durante o processamento) e o JarvisCore.
-let active = false
-export function setWarp(v) {
-  active = !!v
+// Dispara um giro rápido único nas estrelas de fundo (ao entrar na nota criada).
+// O Starfield observa o timestamp e toca a animação uma vez.
+let spinAt = 0
+export function triggerStarSpin() {
+  spinAt = performance.now()
 }
-export function getWarp() {
-  return active
+export function getStarSpin() {
+  return spinAt
 }

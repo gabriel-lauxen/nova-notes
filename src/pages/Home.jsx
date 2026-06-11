@@ -8,7 +8,8 @@ import { habitsApi, notesApi } from "../lib/store";
 import { useAuth } from "../context/AuthContext";
 import { transcribe, generateNote } from "../lib/ai";
 import { setVoiceLevel, setVoiceActive } from "../lib/voiceLevel";
-import { setWarp } from "../lib/warp";
+import { triggerStarSpin } from "../lib/warp";
+import { setCoreSpin, setCoreCollapse } from "../lib/coreSpin";
 
 function greeting() {
   const h = new Date().getHours();
@@ -28,7 +29,12 @@ const todayKey = () => {
 const INCL = 0.35;
 const GALAXY_SPEED = 0.13;
 
-export default function Home({ onNewNote, onRefresh, pendingVoice, onVoiceConsumed }) {
+export default function Home({
+  onNewNote,
+  onRefresh,
+  pendingVoice,
+  onVoiceConsumed,
+}) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const firstName = (
@@ -50,6 +56,7 @@ export default function Home({ onNewNote, onRefresh, pendingVoice, onVoiceConsum
   const [habits, setHabits] = useState([]);
   const [open, setOpen] = useState(false);
   const [recState, setRecState] = useState("idle"); // idle | connecting | recording | processing
+  const [closing, setClosing] = useState(false); // holograma fechando no fim
   const [voiceErr, setVoiceErr] = useState("");
   const media = useRef(null); // { stream, recorder, audioCtx, ampRaf }
 
@@ -87,7 +94,7 @@ export default function Home({ onNewNote, onRefresh, pendingVoice, onVoiceConsum
           "-=0.3",
         )
         .to(".home-sub", { opacity: 1, duration: 0.8 }, "-=0.5")
-        .to(".home-actions", { opacity: 1, y: 0, duration: 0.7 }, "-=0.4");
+        .to(".home-actions", { opacity: 1, y: 0, duration: 0.1 }, "-=0.4");
     }, overlay);
     return () => ctx.revert();
   }, []);
@@ -126,11 +133,21 @@ export default function Home({ onNewNote, onRefresh, pendingVoice, onVoiceConsum
         tRef.current += 0.016;
         if (habitOrbiting.current && orbitRef.current) {
           const p = computePos(0);
-          gsap.set(orbitRef.current, { x: p.x, y: p.y, scale: p.scale, opacity: 1 });
+          gsap.set(orbitRef.current, {
+            x: p.x,
+            y: p.y,
+            scale: p.scale,
+            opacity: 1,
+          });
         }
         if (voiceOrbiting.current && voiceRef.current) {
           const p = computePos(Math.PI); // lado oposto da órbita
-          gsap.set(voiceRef.current, { x: p.x, y: p.y, scale: p.scale, opacity: 1 });
+          gsap.set(voiceRef.current, {
+            x: p.x,
+            y: p.y,
+            scale: p.scale,
+            opacity: 1,
+          });
         }
       }
       rafRef.current = requestAnimationFrame(loop);
@@ -156,7 +173,14 @@ export default function Home({ onNewNote, onRefresh, pendingVoice, onVoiceConsum
           : 16;
       const tx = window.innerWidth - menuW - 16 - pr.left;
       const ty = topY - pr.top;
-      gsap.to(el, { x: tx, y: ty, scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" });
+      gsap.to(el, {
+        x: tx,
+        y: ty,
+        scale: 1,
+        opacity: 1,
+        duration: 0.5,
+        ease: "power3.out",
+      });
     });
   };
 
@@ -172,9 +196,15 @@ export default function Home({ onNewNote, onRefresh, pendingVoice, onVoiceConsum
         requestAnimationFrame(() => {
           const p = computePos(0);
           gsap.to(el, {
-            x: p.x, y: p.y, scale: p.scale, opacity: 1,
-            duration: 0.45, ease: "power3.out",
-            onComplete: () => { habitOrbiting.current = true; },
+            x: p.x,
+            y: p.y,
+            scale: p.scale,
+            opacity: 1,
+            duration: 0.45,
+            ease: "power3.out",
+            onComplete: () => {
+              habitOrbiting.current = true;
+            },
           });
         });
       },
@@ -197,9 +227,13 @@ export default function Home({ onNewNote, onRefresh, pendingVoice, onVoiceConsum
      o microfone, o ícone continua deslizando até o canto e o loader segue girando. */
   const setFlyTransition = (on) => {
     const el = voiceRef.current;
-    if (el) el.style.transition = on ? "transform 0.55s cubic-bezier(0.22,1,0.36,1)" : "none";
+    if (el)
+      el.style.transition = on
+        ? "transform 0.55s cubic-bezier(0.22,1,0.36,1)"
+        : "none";
   };
-  const flyVoiceToCorner = () => {
+  // mode: 'core' (núcleo grande, gravando) | 'loader' (spinner pequeno) -> margem menor
+  const flyVoiceToCorner = (mode = "loader") => {
     const el = voiceRef.current;
     if (!el) return;
     const parent = el.offsetParent || homeRef.current;
@@ -207,13 +241,19 @@ export default function Home({ onNewNote, onRefresh, pendingVoice, onVoiceConsum
     const w = el.offsetWidth || 50;
     const h = el.offsetHeight || 50;
     const isMobile = window.innerWidth <= 760;
-    // o núcleo (VoiceCore) transborda o botão; calculo a margem a partir do
-    // tamanho do core pra o espaço VISUAL ficar certo nos dois lados.
-    const coreSize = isMobile ? 104 : 200;
-    const overflow = Math.max(0, (coreSize - h) / 2);
-    const visual = isMobile ? 24 : 34; // folga visual
-    const mx = overflow + visual;
-    const my = overflow + (isMobile ? 40 : visual); // mobile: folga extra pra bottom bar
+    let mx, my;
+    if (mode === "core") {
+      // o núcleo transborda o botão; margem maior pra o espaço VISUAL ficar certo
+      const coreSize = isMobile ? 104 : 200;
+      const overflow = Math.max(0, (coreSize - h) / 2);
+      const visual = isMobile ? 24 : 34;
+      mx = overflow + visual;
+      my = overflow + (isMobile ? 40 : visual);
+    } else {
+      // loader pequeno: bem perto do canto
+      mx = isMobile ? 16 : 22;
+      my = isMobile ? 34 : 22;
+    }
     const tx = window.innerWidth - mx - w - pr.left;
     const ty = window.innerHeight - my - h - pr.top;
     setFlyTransition(true);
@@ -221,6 +261,48 @@ export default function Home({ onNewNote, onRefresh, pendingVoice, onVoiceConsum
     el.style.transform = `translate(${tx}px, ${ty}px) scale(1)`;
     el.style.opacity = "1";
   };
+
+  // reposiciona conforme o estado: gravando (núcleo grande) fica mais pra dentro;
+  // conectando/processando (loader pequeno) encosta no canto.
+  useEffect(() => {
+    if (recState === "recording") flyVoiceToCorner("core");
+    else if (recState === "connecting" || recState === "processing")
+      flyVoiceToCorner("loader");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recState]);
+
+  // core: acelera a rotação no carregar; ao fechar, acelera + implode pro centro
+  useEffect(() => {
+    if (closing) {
+      setCoreSpin(10);
+      setCoreCollapse(1);
+    } else if (recState === "processing") {
+      setCoreSpin(3);
+      setCoreCollapse(0);
+    } else {
+      setCoreSpin(1);
+      setCoreCollapse(0);
+    }
+    return () => {
+      setCoreSpin(1);
+      setCoreCollapse(0);
+    };
+  }, [recState, closing]);
+
+  // some com o ícone de hábito enquanto a voz está ativa
+  useEffect(() => {
+    const el = orbitRef.current;
+    if (!el) return;
+    if (recState !== "idle") {
+      habitOrbiting.current = false;
+      el.style.pointerEvents = "none";
+      gsap.to(el, { opacity: 0, duration: 0.3, ease: "power2.out" });
+    } else if (!open) {
+      el.style.pointerEvents = "";
+      habitOrbiting.current = true; // o loop volta a posicionar e mostrar (opacity 1)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recState]);
   const flyVoiceBack = () => {
     const el = voiceRef.current;
     if (!el) return;
@@ -247,8 +329,10 @@ export default function Home({ onNewNote, onRefresh, pendingVoice, onVoiceConsum
       });
       onRefresh?.();
       media.current = null;
-      // deixa o zoom rápido do core tocar antes de entrar na nota
-      await new Promise((r) => setTimeout(r, 620));
+      // implode o core pro centro (~0.3s) e entra na nota
+      setClosing(true);
+      await new Promise((r) => setTimeout(r, 300));
+      triggerStarSpin(); // giro lento das estrelas ao entrar na nova página
       navigate(`/note/${note.id}`);
     } catch (e) {
       setVoiceErr(e.message || "Falha ao processar o áudio.");
@@ -265,7 +349,9 @@ export default function Home({ onNewNote, onRefresh, pendingVoice, onVoiceConsum
     // dispara o voo pro canto via CSS e espera 2 frames pra a transição
     // ser commitada na composição ANTES da chamada que congela a thread.
     flyVoiceToCorner();
-    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    await new Promise((r) =>
+      requestAnimationFrame(() => requestAnimationFrame(r)),
+    );
     let stream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -275,13 +361,14 @@ export default function Home({ onNewNote, onRefresh, pendingVoice, onVoiceConsum
       flyVoiceBack();
       return;
     }
-    const mime = [
-      "audio/webm;codecs=opus",
-      "audio/webm",
-      "audio/mp4",
-      "audio/aac",
-    ].find((m) => window.MediaRecorder?.isTypeSupported?.(m)) || "";
-    const recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+    const mime =
+      ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/aac"].find(
+        (m) => window.MediaRecorder?.isTypeSupported?.(m),
+      ) || "";
+    const recorder = new MediaRecorder(
+      stream,
+      mime ? { mimeType: mime } : undefined,
+    );
     const chunks = [];
     recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
     recorder.onstop = () => finishRecording(chunks, recorder.mimeType || mime);
@@ -315,7 +402,10 @@ export default function Home({ onNewNote, onRefresh, pendingVoice, onVoiceConsum
         m.spoke = true;
       }
       // para automaticamente: já falou e ficou em silêncio, ou estourou o tempo
-      if ((m.spoke && now - m.lastSound > SILENCE_MS) || now - m.started > MAX_MS) {
+      if (
+        (m.spoke && now - m.lastSound > SILENCE_MS) ||
+        now - m.started > MAX_MS
+      ) {
         stopRecording();
         return;
       }
@@ -323,7 +413,10 @@ export default function Home({ onNewNote, onRefresh, pendingVoice, onVoiceConsum
     };
 
     media.current = {
-      stream, recorder, audioCtx, ampRaf: 0,
+      stream,
+      recorder,
+      audioCtx,
+      ampRaf: 0,
       started: performance.now(),
       lastSound: performance.now(),
       spoke: false,
@@ -338,9 +431,13 @@ export default function Home({ onNewNote, onRefresh, pendingVoice, onVoiceConsum
     if (!m) return;
     setVoiceActive(false);
     cancelAnimationFrame(m.ampRaf);
-    try { m.recorder.state !== "inactive" && m.recorder.stop(); } catch {}
+    try {
+      m.recorder.state !== "inactive" && m.recorder.stop();
+    } catch {}
     m.stream.getTracks().forEach((t) => t.stop());
-    try { m.audioCtx.close(); } catch {}
+    try {
+      m.audioCtx.close();
+    } catch {}
   };
 
   const onVoiceClick = () => {
@@ -358,12 +455,6 @@ export default function Home({ onNewNote, onRefresh, pendingVoice, onVoiceConsum
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingVoice]);
 
-  // modo hiperespaço nas estrelas de fundo durante o processamento
-  useEffect(() => {
-    setWarp(recState === "processing");
-    return () => setWarp(false);
-  }, [recState]);
-
   // limpeza ao desmontar
   useEffect(() => {
     return () => {
@@ -371,9 +462,13 @@ export default function Home({ onNewNote, onRefresh, pendingVoice, onVoiceConsum
       if (m) {
         setVoiceActive(false);
         cancelAnimationFrame(m.ampRaf);
-        try { m.recorder.state !== "inactive" && m.recorder.stop(); } catch {}
+        try {
+          m.recorder.state !== "inactive" && m.recorder.stop();
+        } catch {}
         m.stream?.getTracks().forEach((t) => t.stop());
-        try { m.audioCtx?.close(); } catch {}
+        try {
+          m.audioCtx?.close();
+        } catch {}
       }
     };
   }, []);
@@ -383,7 +478,8 @@ export default function Home({ onNewNote, onRefresh, pendingVoice, onVoiceConsum
       className={
         "home" +
         (recState !== "idle" ? " voice-active" : "") +
-        (recState === "processing" ? " home-zoom" : "")
+        (recState === "processing" && !closing ? " home-loading" : "") +
+        (closing ? " home-implode" : "")
       }
       ref={homeRef}
     >
@@ -395,7 +491,11 @@ export default function Home({ onNewNote, onRefresh, pendingVoice, onVoiceConsum
       {/* ícone de hábitos do dia */}
       <div className={"habit-orbit" + (open ? " open" : "")} ref={orbitRef}>
         {!open ? (
-          <button className="orbit-icon" onClick={openMenu} title="Hábitos de hoje">
+          <button
+            className="orbit-icon"
+            onClick={openMenu}
+            title="Hábitos de hoje"
+          >
             <CalendarCheck size={20} />
           </button>
         ) : (
@@ -449,7 +549,14 @@ export default function Home({ onNewNote, onRefresh, pendingVoice, onVoiceConsum
         </button>
       </div>
 
-      {voiceErr && <div className="voice-err">{voiceErr}</div>}
+      {voiceErr && (
+        <div className="voice-err">
+          <span>{voiceErr}</span>
+          <button onClick={() => setVoiceErr("")} aria-label="Fechar">
+            ×
+          </button>
+        </div>
+      )}
 
       <div className="home-overlay" ref={overlay}>
         <div className="home-hello">
@@ -467,7 +574,8 @@ export default function Home({ onNewNote, onRefresh, pendingVoice, onVoiceConsum
             objetivos
           </button>
           <button className="btn-neon outline" onClick={onNewNote}>
-            Nova nota <ArrowRight size={16} style={{ verticalAlign: "middle" }} />
+            Nova nota{" "}
+            <ArrowRight size={16} style={{ verticalAlign: "middle" }} />
           </button>
         </div>
       </div>

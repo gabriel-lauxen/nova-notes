@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useTheme } from "../context/ThemeContext";
 import { hexToHsl } from "../theme/palette";
 import { getVoiceLevel } from "../lib/voiceLevel";
+import { getCoreSpin, getCoreCollapse } from "../lib/coreSpin";
 
 // Campo de partículas em <canvas> 2D, mas com matemática pseudo-3D.
 // As formas são geradas no espaço 3D (centradas na origem) e ficam num disco.
@@ -183,24 +184,6 @@ export default function JarvisCore() {
       });
     }
 
-    let stars = [];
-    const buildStars = () => {
-      const n = Math.min(420, Math.round((W * H) / 4200));
-      stars = [];
-      for (let i = 0; i < n; i++) {
-        stars.push({
-          x: Math.random() * W,
-          y: Math.random() * H,
-          size:
-            Math.random() < 0.12
-              ? 1.4 + Math.random() * 1.1
-              : 0.4 + Math.random() * 0.9,
-          tw: Math.random() * TAU,
-          sp: 0.4 + Math.random() * 1.4,
-          base: 0.25 + Math.random() * 0.4,
-        });
-      }
-    };
 
     let sceneIndex = 0;
     const applyScene = (idx, initial = false) => {
@@ -227,7 +210,6 @@ export default function JarvisCore() {
       canvas.style.width = W + "px";
       canvas.style.height = H + "px";
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      buildStars();
       applyScene(sceneIndex);
     };
 
@@ -285,11 +267,17 @@ export default function JarvisCore() {
     }, SWAP_MS);
 
     let raf,
-      t = 0;
+      t = 0,
+      spinMul = 1, // multiplicador da rotação natural (acelera no carregar/fechar)
+      collapseCur = 0; // 0..1: puxa as partículas pro centro (implosão)
     const cosR = Math.cos(ROLL),
       sinR = Math.sin(ROLL);
     const render = () => {
-      if (!dragging) t += 0.016; // pausa o giro automático enquanto o dedo controla
+      // acelera a rotação natural quando pedido (carregar/fechar holograma)
+      spinMul += (getCoreSpin() - spinMul) * 0.08;
+      // colapso: ease rápido em direção ao alvo (implosão pro centro)
+      collapseCur += (getCoreCollapse() - collapseCur) * 0.16;
+      if (!dragging) t += 0.016 * spinMul; // pausa o giro automático enquanto o dedo controla
       ctx.clearRect(0, 0, W, H);
       // amplitude da voz (0..1) -> faz a galáxia reagir como uma onda sonora
       const amp = getVoiceLevel();
@@ -306,17 +294,6 @@ export default function JarvisCore() {
         cy = H / 2 - 20 - (W <= 760 ? H * 0.06 : 0);
       const scene = SCENES[sceneIndex];
       const focal = maxR * 2.4;
-
-      // fundo: estrelas
-      const starRGB = mode === "light" ? "120,120,140" : "255,255,255";
-      for (let i = 0; i < stars.length; i++) {
-        const st = stars[i];
-        const a = st.base + Math.sin(t * st.sp + st.tw) * 0.22;
-        ctx.fillStyle = `rgba(${starRGB}, ${Math.max(0, a)})`;
-        ctx.beginPath();
-        ctx.arc(st.x, st.y, st.size, 0, TAU);
-        ctx.fill();
-      }
 
       for (let i = 0; i < COUNT; i++) {
         const p = particles[i];
@@ -390,9 +367,20 @@ export default function JarvisCore() {
           (0.75 + Math.sin(t * 1.6 + p.tw) * 0.25) *
           (1 + amp * 0.6);
         const lum = mode === "light" ? p.lum - 18 : p.lum;
-        ctx.fillStyle = `hsl(${h} ${sat}% ${lum}% / ${clamp(alpha, 0, 1)})`;
+        // colapso: puxa o ponto pro centro e some (implosão)
+        let drawX = p.x + ox,
+          drawY = p.y + oy;
+        let aMul = 1;
+        if (collapseCur > 0.001) {
+          const posC = Math.min(1, collapseCur * 1.6); // posição vai mais rápido
+          drawX += (cx - drawX) * posC;
+          drawY += (cy - drawY) * posC;
+          // opacidade some rápido: chega a 0 lá pela metade do colapso
+          aMul = Math.max(0, 1 - collapseCur * 1.9);
+        }
+        ctx.fillStyle = `hsl(${h} ${sat}% ${lum}% / ${clamp(alpha * aMul, 0, 1)})`;
         ctx.beginPath();
-        ctx.arc(p.x + ox, p.y + oy, Math.max(0.4, size), 0, TAU);
+        ctx.arc(drawX, drawY, Math.max(0.4, size), 0, TAU);
         ctx.fill();
       }
       raf = requestAnimationFrame(render);

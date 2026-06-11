@@ -28,25 +28,32 @@ export default function App() {
   // fecha o menu mobile ao trocar de página
   useEffect(() => { setNavOpen(false) }, [location.pathname])
 
-  // gesto: swipe rápido pra direita a partir da borda esquerda abre o drawer (mobile)
+  // gestos de borda (mobile):
+  //  - borda esquerda -> direita: abre o drawer
+  //  - borda direita -> esquerda: ativa o comando de voz (vai pra Home e grava)
   useEffect(() => {
     if (window.innerWidth > 760) return
-    let sx = 0, sy = 0, st = 0, tracking = false
+    let sx = 0, sy = 0, st = 0, edge = null // 'left' | 'right' | null
     const onStart = (e) => {
       const t = e.touches[0]
-      // só começa se o toque iniciar bem na borda esquerda
-      tracking = t.clientX <= 28
+      if (t.clientX <= 28) edge = 'left'
+      else if (t.clientX >= window.innerWidth - 28) edge = 'right'
+      else edge = null
       sx = t.clientX; sy = t.clientY; st = Date.now()
     }
     const onEnd = (e) => {
-      if (!tracking) return
-      tracking = false
+      if (!edge) return
       const t = e.changedTouches[0]
       const dx = t.clientX - sx
       const dy = t.clientY - sy
       const dt = Date.now() - st
-      // rápido, pra direita, predominantemente horizontal
-      if (dx > 60 && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 500) setNavOpen(true)
+      const fast = dt < 500 && Math.abs(dx) > Math.abs(dy) * 1.5
+      if (edge === 'left' && dx > 60 && fast) setNavOpen(true)
+      else if (edge === 'right' && dx < -60 && fast) {
+        navigate('/')
+        setPendingVoice(true)
+      }
+      edge = null
     }
     window.addEventListener('touchstart', onStart, { passive: true })
     window.addEventListener('touchend', onEnd, { passive: true })
@@ -54,7 +61,7 @@ export default function App() {
       window.removeEventListener('touchstart', onStart)
       window.removeEventListener('touchend', onEnd)
     }
-  }, [])
+  }, [navigate])
 
   // atalhos: Ctrl/Cmd+K (busca) e Ctrl/Cmd+J (ir pra Home e gravar voz)
   useEffect(() => {
