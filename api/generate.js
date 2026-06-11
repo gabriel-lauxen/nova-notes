@@ -6,6 +6,8 @@ const SYSTEM =
   'Você é um assistente de escrita dentro de um editor de notas. Escreva APENAS o que foi pedido, ' +
   'sem preâmbulos, saudações ou frases como "Claro! Aqui está...". Nunca comente o que vai fazer. ' +
   'Use Markdown bem formatado quando fizer sentido (títulos com #, listas, negrito, tabelas). ' +
+  'Se pedirem lista de mercado, compras, tarefas ou qualquer checklist, use checkboxes de Markdown ' +
+  '(linhas começando com "- [ ] "). ' +
   'Não envolva a resposta inteira em bloco de código, a menos que seja código.'
 
 const MAX_TOKENS = 3000

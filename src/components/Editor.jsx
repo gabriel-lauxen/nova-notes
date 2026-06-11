@@ -16,15 +16,17 @@ import { ProgressTracker } from './ProgressTracker'
 // Editor de texto rico com armazenamento em Markdown.
 // onChange recebe o conteúdo já convertido para markdown.
 // onEditor entrega a instância (para foco a partir do título, etc).
-export default function Editor({ content, onChange, onEditor }) {
+export default function Editor({ content, onChange, onEditor, editable = true }) {
   const editor = useEditor({
+    editable,
     extensions: [
       StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
       Placeholder.configure({
         placeholder: "Escreva algo, ou digite '/' para inserir blocos…",
       }),
       TaskList,
-      TaskItem.configure({ nested: true }),
+      // onReadOnlyChecked: permite marcar checkbox mesmo no modo leitura
+      TaskItem.configure({ nested: true, onReadOnlyChecked: () => true }),
       Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: 'noopener' } }),
       Table.configure({ resizable: true }),
       TableRow,
@@ -41,6 +43,11 @@ export default function Editor({ content, onChange, onEditor }) {
   useEffect(() => {
     if (editor && onEditor) onEditor(editor)
   }, [editor, onEditor])
+
+  // alterna modo leitura (sem teclado) mantendo checkbox clicável
+  useEffect(() => {
+    if (editor) editor.setEditable(editable)
+  }, [editor, editable])
 
   // recarrega conteúdo ao trocar de documento
   useEffect(() => {

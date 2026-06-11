@@ -9,6 +9,7 @@ import {
   Loader2,
   Target,
   MoreVertical,
+  BookOpen,
 } from "lucide-react";
 import Editor from "../components/Editor";
 import LinkDialog from "../components/LinkDialog";
@@ -20,6 +21,9 @@ import { marked } from "marked";
 import { generateNote, transcribe } from "../lib/ai";
 import { recordVoice } from "../lib/recorder";
 import { notesApi } from "../lib/store";
+
+// 5 presets de tamanho de fonte (fator de escala)
+const FONT_SCALES = [0.85, 0.93, 1, 1.12, 1.28];
 
 // cor primária atual (para o spinner)
 function accentColor() {
@@ -56,8 +60,17 @@ export default function NotePage({ onChanged, onDeleted }) {
   const [aiBusy, setAiBusy] = useState(false);
   const [aiError, setAiError] = useState(null);
   const [recording, setRecording] = useState(false);
+  const [readMode, setReadMode] = useState(false);
+  const [fontIdx, setFontIdx] = useState(() => {
+    const v = parseInt(localStorage.getItem("nova-note-font") || "2", 10);
+    return Number.isFinite(v) && v >= 0 && v < FONT_SCALES.length ? v : 2;
+  });
   const voiceStopRef = useRef(null);
   const runVoiceRef = useRef(null);
+
+  useEffect(() => {
+    localStorage.setItem("nova-note-font", String(fontIdx));
+  }, [fontIdx]);
 
   const openHeadMenu = (e) => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -260,7 +273,7 @@ export default function NotePage({ onChanged, onDeleted }) {
   if (!note) return <div className="panel">Carregando…</div>;
 
   return (
-    <div className="editor-page">
+    <div className="editor-page" style={{ "--note-fs": FONT_SCALES[fontIdx] }}>
       <div className="editor-head">
         <button
           className={"goal-toggle" + (note.is_goal ? " on" : "")}
@@ -380,7 +393,7 @@ export default function NotePage({ onChanged, onDeleted }) {
         <div
           ref={titleRef}
           className="title-input"
-          contentEditable
+          contentEditable={!readMode}
           suppressContentEditableWarning
           data-placeholder="Sem título"
           onInput={(e) => queueSave({ title: e.currentTarget.textContent })}
@@ -453,6 +466,7 @@ export default function NotePage({ onChanged, onDeleted }) {
             content={note.content}
             onChange={handleContent}
             onEditor={(ed) => (editorRef.current = ed)}
+            editable={!readMode}
           />
         </div>
       </div>
@@ -471,6 +485,36 @@ export default function NotePage({ onChanged, onDeleted }) {
                 zIndex: 120,
               }}
             >
+              <button
+                onClick={() => {
+                  setHeadMenu(null);
+                  setReadMode((v) => !v);
+                }}
+              >
+                <BookOpen size={14} /> Modo leitura{" "}
+                {readMode && (
+                  <Check
+                    size={13}
+                    style={{ marginLeft: "auto", color: "var(--accent)" }}
+                  />
+                )}
+              </button>
+              <div className="menu-fontsize">
+                <span>Fonte</span>
+                <div className="fs-options">
+                  {FONT_SCALES.map((s, i) => (
+                    <button
+                      key={i}
+                      className={i === fontIdx ? "active" : ""}
+                      style={{ fontSize: 11 + i * 2.5 }}
+                      onClick={() => setFontIdx(i)}
+                      title={`Tamanho ${i + 1}`}
+                    >
+                      A
+                    </button>
+                  ))}
+                </div>
+              </div>
               <button
                 onClick={() => {
                   setHeadMenu(null);

@@ -1040,7 +1040,7 @@ a:hover {
   border: none;
   outline: none;
   color: var(--text);
-  font-size: 40px;
+  font-size: calc(40px * var(--note-fs, 1));
   font-weight: 700;
   line-height: 1.15;
   margin-bottom: 18px;
@@ -1063,7 +1063,7 @@ a:hover {
 
 .ProseMirror {
   outline: none;
-  font-size: 16.5px;
+  font-size: calc(16.5px * var(--note-fs, 1));
   line-height: 1.7;
   color: var(--text);
 }
@@ -1071,17 +1071,17 @@ a:hover {
   margin-top: 0.75em;
 }
 .ProseMirror h1 {
-  font-size: 30px;
+  font-size: 1.82em; /* relativo à base -> escala junto com o preset */
   font-weight: 700;
   margin-top: 1em;
 }
 .ProseMirror h2 {
-  font-size: 24px;
+  font-size: 1.45em;
   font-weight: 700;
   margin-top: 1em;
 }
 .ProseMirror h3 {
-  font-size: 19px;
+  font-size: 1.15em;
   font-weight: 600;
   margin-top: 1em;
 }
@@ -1333,6 +1333,44 @@ a:hover {
 }
 .card-menu button.danger {
   color: #f87171;
+}
+/* seletor de tamanho de fonte dentro do menu */
+.menu-fontsize {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 10px;
+  font-size: 13.5px;
+  color: var(--text);
+}
+.menu-fontsize > span {
+  color: var(--text-faint);
+}
+.fs-options {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.fs-options button {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  color: var(--text);
+  line-height: 1;
+}
+.fs-options button:hover {
+  background: var(--surface-hover);
+}
+.fs-options button.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
 }
 
 /* slider de progresso no header da nota */
