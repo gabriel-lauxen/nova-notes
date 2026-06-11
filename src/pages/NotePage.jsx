@@ -28,7 +28,11 @@ const FONT_SCALES = [0.85, 0.93, 1, 1.12, 1.28];
 // cor primária atual (para o spinner)
 function accentColor() {
   if (typeof window === "undefined") return "#a855f7";
-  return getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#a855f7";
+  return (
+    getComputedStyle(document.documentElement)
+      .getPropertyValue("--accent")
+      .trim() || "#a855f7"
+  );
 }
 
 // conta checkboxes (to-dos) e os dias dos marcadores de progresso
@@ -451,13 +455,19 @@ export default function NotePage({ onChanged, onDeleted }) {
             </button>
           )}
           {aiBusy && (
-            <div className="ai-generating" style={{ top: aiPos.top, left: aiPos.left }}>
+            <div
+              className="ai-generating"
+              style={{ top: aiPos.top, left: aiPos.left }}
+            >
               <span className="ai-generating-text">Gerando</span>
               <RingLoader color={accentColor()} size={20} />
             </div>
           )}
           {aiError && (
-            <div className="ai-error" style={{ top: aiPos.top, left: aiPos.left }}>
+            <div
+              className="ai-error"
+              style={{ top: aiPos.top, left: aiPos.left }}
+            >
               <span className="ai-error-msg">{aiError}</span>
               <button onClick={() => setAiError(null)}>×</button>
             </div>
@@ -485,20 +495,6 @@ export default function NotePage({ onChanged, onDeleted }) {
                 zIndex: 120,
               }}
             >
-              <button
-                onClick={() => {
-                  setHeadMenu(null);
-                  setReadMode((v) => !v);
-                }}
-              >
-                <BookOpen size={14} /> Modo leitura{" "}
-                {readMode && (
-                  <Check
-                    size={13}
-                    style={{ marginLeft: "auto", color: "var(--accent)" }}
-                  />
-                )}
-              </button>
               <div className="menu-fontsize">
                 <span>Fonte</span>
                 <div className="fs-options">
@@ -515,6 +511,21 @@ export default function NotePage({ onChanged, onDeleted }) {
                   ))}
                 </div>
               </div>
+              <button
+                onClick={() => {
+                  setHeadMenu(null);
+                  setReadMode((v) => !v);
+                }}
+              >
+                <BookOpen size={14} /> Modo leitura{" "}
+                {readMode && (
+                  <Check
+                    size={13}
+                    style={{ marginLeft: "auto", color: "var(--accent)" }}
+                  />
+                )}
+              </button>
+
               <button
                 onClick={() => {
                   setHeadMenu(null);
