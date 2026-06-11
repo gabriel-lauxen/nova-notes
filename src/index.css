@@ -2766,7 +2766,13 @@ tbody .habit-name-col {
     flex-wrap: wrap;
     gap: 6px;
     padding: calc(env(safe-area-inset-top, 0px) + 12px) 6px 12px 66px;
-    position: static;
+    /* fixo no topo ao rolar */
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: color-mix(in srgb, var(--bg) 90%, transparent);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
   }
   .editor-head .spacer {
     display: block;

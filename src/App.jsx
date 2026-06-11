@@ -28,6 +28,7 @@ export default function App() {
   // fecha o menu mobile ao trocar de página
   useEffect(() => { setNavOpen(false) }, [location.pathname])
 
+
   // gestos de borda (mobile):
   //  - borda esquerda -> direita: abre o drawer
   //  - borda direita -> esquerda: ativa o comando de voz (vai pra Home e grava)
