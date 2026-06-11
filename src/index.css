@@ -1176,6 +1176,10 @@ a:hover {
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
+/* no modo leitura, o texto do to-do é clicável (marca o checkbox) */
+.ProseMirror[contenteditable="false"] ul[data-type="taskList"] li > div {
+  cursor: pointer;
+}
 /* texto riscado quando concluído */
 .ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div {
   opacity: 0.55;

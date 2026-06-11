@@ -27,14 +27,21 @@ const CheckTaskItem = TaskItem.extend({
       checkbox.type = 'checkbox'
       checkbox.checked = node.attrs.checked
       checkbox.addEventListener('mousedown', (e) => e.preventDefault())
-      checkbox.addEventListener('change', (event) => {
-        const checked = event.target.checked
+      const setChecked = (checked) => {
         if (typeof getPos !== 'function') return
         const pos = getPos()
         if (typeof pos !== 'number') return
         const { state, view } = editor
         const cur = state.doc.nodeAt(pos)
-        view.dispatch(state.tr.setNodeMarkup(pos, undefined, { ...(cur && cur.attrs), checked }))
+        if (!cur) return
+        view.dispatch(state.tr.setNodeMarkup(pos, undefined, { ...cur.attrs, checked }))
+      }
+      checkbox.addEventListener('change', (event) => setChecked(event.target.checked))
+      // no modo leitura, clicar no TEXTO do item também marca/desmarca
+      content.addEventListener('click', () => {
+        if (editor.isEditable) return
+        const cur = typeof getPos === 'function' ? editor.state.doc.nodeAt(getPos()) : null
+        setChecked(!(cur && cur.attrs.checked))
       })
       Object.entries(this.options.HTMLAttributes).forEach(([k, v]) => li.setAttribute(k, v))
       li.dataset.checked = node.attrs.checked

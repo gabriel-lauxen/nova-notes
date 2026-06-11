@@ -65,6 +65,19 @@ export default function NotePage({ onChanged, onDeleted }) {
   const [aiError, setAiError] = useState(null);
   const [recording, setRecording] = useState(false);
   const [readMode, setReadMode] = useState(false);
+
+  // modo leitura é salvo por nota (independente)
+  useEffect(() => {
+    let on = false;
+    try { on = localStorage.getItem(`nova-read-${id}`) === "1"; } catch {}
+    setReadMode(on);
+  }, [id]);
+  const toggleRead = () =>
+    setReadMode((v) => {
+      const nv = !v;
+      try { localStorage.setItem(`nova-read-${id}`, nv ? "1" : "0"); } catch {}
+      return nv;
+    });
   const [fontIdx, setFontIdx] = useState(() => {
     const v = parseInt(localStorage.getItem("nova-note-font") || "2", 10);
     return Number.isFinite(v) && v >= 0 && v < FONT_SCALES.length ? v : 2;
@@ -514,7 +527,7 @@ export default function NotePage({ onChanged, onDeleted }) {
               <button
                 onClick={() => {
                   setHeadMenu(null);
-                  setReadMode((v) => !v);
+                  toggleRead();
                 }}
               >
                 <BookOpen size={14} /> Modo leitura{" "}
