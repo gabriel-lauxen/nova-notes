@@ -10,6 +10,7 @@ import {
   Target,
   MoreVertical,
   BookOpen,
+  Tag,
 } from "lucide-react";
 import Editor from "../components/Editor";
 import Spinner from "../components/Spinner";
@@ -67,6 +68,7 @@ export default function NotePage({ onChanged, onDeleted }) {
   const [aiError, setAiError] = useState(null);
   const [recording, setRecording] = useState(false);
   const [readMode, setReadMode] = useState(false);
+  const [tagAdding, setTagAdding] = useState(false);
 
   // só mostra o loader se demorar mais de 500ms
   const [showLoader, setShowLoader] = useState(false);
@@ -79,13 +81,17 @@ export default function NotePage({ onChanged, onDeleted }) {
   // modo leitura é salvo por nota (independente)
   useEffect(() => {
     let on = false;
-    try { on = localStorage.getItem(`nova-read-${id}`) === "1"; } catch {}
+    try {
+      on = localStorage.getItem(`nova-read-${id}`) === "1";
+    } catch {}
     setReadMode(on);
   }, [id]);
   const toggleRead = () =>
     setReadMode((v) => {
       const nv = !v;
-      try { localStorage.setItem(`nova-read-${id}`, nv ? "1" : "0"); } catch {}
+      try {
+        localStorage.setItem(`nova-read-${id}`, nv ? "1" : "0");
+      } catch {}
       return nv;
     });
   const [fontIdx, setFontIdx] = useState(() => {
@@ -239,7 +245,9 @@ export default function NotePage({ onChanged, onDeleted }) {
         "em Markdown, aplicando a formatação adequada (use checkboxes '- [ ] ' para " +
         "itens acionáveis/listas de compras/tarefas, tabelas quando houver dados a " +
         "comparar, títulos e listas quando ajudar). Preserve o conteúdo, melhore só a " +
-        'estrutura. Ditado:\n\n"' + text + '"';
+        'estrutura. Ditado:\n\n"' +
+        text +
+        '"';
       const { content } = await generateNote(prompt, false);
       const ed = editorRef.current;
       if (ed && content)
@@ -438,23 +446,60 @@ export default function NotePage({ onChanged, onDeleted }) {
       </div>
 
       <div className="editor-body fade-in">
-        <div className="emoji-wrap">
-          <button
-            className="emoji-input"
-            onClick={() => setEmojiOpen((o) => !o)}
-            title="Escolher emoji"
-          >
-            {note.emoji || "📄"}
-          </button>
-          {emojiOpen && (
-            <EmojiPicker
-              onPick={(e) => {
-                queueSave({ emoji: e });
-                setEmojiOpen(false);
-              }}
-              onClose={() => setEmojiOpen(false)}
-            />
-          )}
+        <div className="title-meta">
+          <div className="emoji-wrap">
+            <button
+              className="emoji-input"
+              onClick={() => setEmojiOpen((o) => !o)}
+              title="Escolher emoji"
+            >
+              {note.emoji || "📄"}
+            </button>
+            {emojiOpen && (
+              <EmojiPicker
+                onPick={(e) => {
+                  queueSave({ emoji: e });
+                  setEmojiOpen(false);
+                }}
+                onClose={() => setEmojiOpen(false)}
+              />
+            )}
+          </div>
+          <div className="title-controls">
+            {tagAdding && (
+              <input
+                className="tag-input"
+                autoFocus
+                placeholder="tag"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onBlur={() => setTagAdding(false)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && tagInput.trim()) {
+                    e.preventDefault();
+                    const t = tagInput.trim().replace(/^#/, "");
+                    if (t && !(note.tags || []).includes(t))
+                      queueSave({ tags: [...(note.tags || []), t] });
+                    setTagInput("");
+                  } else if (e.key === "Escape") setTagAdding(false);
+                }}
+              />
+            )}
+            <button
+              className="meta-btn"
+              onClick={() => setTagAdding(true)}
+              title="Adicionar tag"
+            >
+              <Tag size={17} />
+            </button>
+            <button
+              className={"meta-btn" + (readMode ? " active" : "")}
+              onClick={toggleRead}
+              title="Modo leitura"
+            >
+              <BookOpen size={18} />
+            </button>
+          </div>
         </div>
         <div
           ref={titleRef}
@@ -470,35 +515,24 @@ export default function NotePage({ onChanged, onDeleted }) {
             }
           }}
         />
-        <div className="tags-row">
-          {(note.tags || []).map((t) => (
-            <span className="tag-chip" key={t}>
-              {t}
-              <button
-                onClick={() =>
-                  queueSave({ tags: (note.tags || []).filter((x) => x !== t) })
-                }
-              >
-                ×
-              </button>
-            </span>
-          ))}
-          <input
-            className="tag-input"
-            placeholder="+ tag"
-            value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && tagInput.trim()) {
-                e.preventDefault();
-                const t = tagInput.trim().replace(/^#/, "");
-                if (t && !(note.tags || []).includes(t))
-                  queueSave({ tags: [...(note.tags || []), t] });
-                setTagInput("");
-              }
-            }}
-          />
-        </div>
+        {(note.tags || []).length > 0 && (
+          <div className="tags-row">
+            {(note.tags || []).map((t) => (
+              <span className="tag-chip" key={t}>
+                <span className="tag-text">{t}</span>
+                <button
+                  onClick={() =>
+                    queueSave({
+                      tags: (note.tags || []).filter((x) => x !== t),
+                    })
+                  }
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
         <div
           ref={bodyRef}
           onClick={onBodyClick}
