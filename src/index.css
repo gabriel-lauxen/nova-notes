@@ -1382,6 +1382,7 @@ a:hover {
   z-index: -1;
   overflow: hidden;
   opacity: 0.45;
+  animation: matrix-fade-in 1.2s ease both;
   /* cantos de cima: sólido na borda superior, esmaece pra baixo */
   -webkit-mask-image: linear-gradient(
     to bottom,
@@ -1390,6 +1391,10 @@ a:hover {
     transparent 100%
   );
   mask-image: linear-gradient(to bottom, #000 0%, #000 58%, transparent 100%);
+}
+@keyframes matrix-fade-in {
+  from { opacity: 0; }
+  to { opacity: 0.45; }
 }
 .matrix-rain.tl {
   top: 0;
