@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { setGeminiKey, setGroqKey, setCerebrasKey, setProvider } from '../lib/ai'
+import { setCurrentUser } from '../lib/store'
 
 const AuthContext = createContext(null)
 
@@ -24,11 +25,13 @@ export function AuthProvider({ children }) {
     if (!isSupabaseConfigured) return
     supabase.auth.getSession().then(({ data }) => {
       setUser(data.session?.user ?? null)
+      setCurrentUser(data.session?.user?.id)
       syncKeys(data.session?.user)
       setLoading(false)
     })
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       setUser(session?.user ?? null)
+      setCurrentUser(session?.user?.id)
       syncKeys(session?.user)
     })
     return () => sub.subscription.unsubscribe()

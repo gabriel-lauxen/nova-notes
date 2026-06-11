@@ -65,6 +65,12 @@ const ITEMS = [
       c.run()
       window.dispatchEvent(new CustomEvent('nova:ai-refactor'))
     } },
+  { title: 'Agente', subtitle: 'Roda um agente seu com uma instrução', icon: '🤖',
+    keywords: 'agente agent prompt ia ai assistente persona',
+    run: (c) => {
+      c.run()
+      window.dispatchEvent(new CustomEvent('nova:ai-agent'))
+    } },
 ]
 
 // pontua cada item pela relevância à busca (título e palavras-chave),

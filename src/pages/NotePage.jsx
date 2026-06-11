@@ -12,6 +12,7 @@ import {
   BookOpen,
   Tag,
   ListChecks,
+  Share2,
 } from "lucide-react";
 import Editor from "../components/Editor";
 import Spinner from "../components/Spinner";
@@ -19,6 +20,8 @@ import LinkDialog from "../components/LinkDialog";
 import ConfirmDialog from "../components/ConfirmDialog";
 import EmojiPicker from "../components/EmojiPicker";
 import AIDialog from "../components/AIDialog";
+import AgentDialog from "../components/AgentDialog";
+import ShareDialog from "../components/ShareDialog";
 import { RingLoader } from "react-spinners";
 import { marked } from "marked";
 import { generateNote, transcribe } from "../lib/ai";
@@ -65,6 +68,8 @@ export default function NotePage({ onChanged, onDeleted }) {
   const [headMenu, setHeadMenu] = useState(null); // null | { x, y }
   const [aiOpen, setAiOpen] = useState(false);
   const [refactorOpen, setRefactorOpen] = useState(false);
+  const [agentOpen, setAgentOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
   const [aiError, setAiError] = useState(null);
   const [recording, setRecording] = useState(false);
@@ -135,15 +140,18 @@ export default function NotePage({ onChanged, onDeleted }) {
     const openAi = () => setAiOpen(true);
     const openVoice = () => runVoiceRef.current?.();
     const openRefactor = () => setRefactorOpen(true);
+    const openAgent = () => setAgentOpen(true);
     window.addEventListener("nova:add-link", openLink);
     window.addEventListener("nova:ai-generate", openAi);
     window.addEventListener("nova:ai-voice", openVoice);
     window.addEventListener("nova:ai-refactor", openRefactor);
+    window.addEventListener("nova:ai-agent", openAgent);
     return () => {
       window.removeEventListener("nova:add-link", openLink);
       window.removeEventListener("nova:ai-generate", openAi);
       window.removeEventListener("nova:ai-voice", openVoice);
       window.removeEventListener("nova:ai-refactor", openRefactor);
+      window.removeEventListener("nova:ai-agent", openAgent);
     };
   }, []);
 
@@ -211,6 +219,43 @@ export default function NotePage({ onChanged, onDeleted }) {
       if (content) ed.chain().focus().setContent(content).run();
     } catch (e) {
       setAiError(e.message || "Falha ao refatorar.");
+    } finally {
+      setAiBusy(false);
+    }
+  };
+
+  // roda um ou mais agentes (soma os prompts) + instrução, insere no cursor
+  const runAgent = async (chosenAgents, instruction) => {
+    setAgentOpen(false);
+    setAiError(null);
+    const ed0 = editorRef.current;
+    if (ed0 && bodyRef.current) {
+      ed0.chain().focus().scrollIntoView().run();
+      try {
+        const c = ed0.view.coordsAtPos(ed0.state.selection.from);
+        const r = bodyRef.current.getBoundingClientRect();
+        setAiPos({ top: c.top - r.top, left: c.left - r.left });
+      } catch {
+        setAiPos({ top: 0, left: 0 });
+      }
+    }
+    setAiBusy(true);
+    try {
+      const persona = chosenAgents
+        .map((a) => (a.content || "").trim())
+        .filter(Boolean)
+        .join("\n\n---\n\n");
+      const ed = editorRef.current;
+      const noteMd = ed ? ed.storage.markdown.getMarkdown() : "";
+      let prompt = persona;
+      if (instruction) prompt += `\n\n# Instrução do usuário\n${instruction}`;
+      if (noteMd.trim())
+        prompt += `\n\n# Conteúdo atual da nota (contexto)\n${noteMd}`;
+      const { content } = await generateNote(prompt, false);
+      if (ed && content)
+        ed.chain().focus().insertContent(marked.parse(content)).run();
+    } catch (e) {
+      setAiError(e.message || "Falha ao rodar o agente.");
     } finally {
       setAiBusy(false);
     }
@@ -467,6 +512,13 @@ export default function NotePage({ onChanged, onDeleted }) {
         <div className="head-actions">
           <button
             className="icon-btn head-full"
+            title="Compartilhar"
+            onClick={() => setShareOpen(true)}
+          >
+            <Share2 size={18} />
+          </button>
+          <button
+            className="icon-btn head-full"
             title="Importar .md"
             onClick={() => fileInput.current?.click()}
           >
@@ -691,6 +743,14 @@ export default function NotePage({ onChanged, onDeleted }) {
               >
                 <ListChecks size={14} /> Marcar/desmarcar todas
               </button>
+              <button
+                onClick={() => {
+                  setHeadMenu(null);
+                  setShareOpen(true);
+                }}
+              >
+                <Share2 size={14} /> Compartilhar
+              </button>
 
               <button
                 onClick={() => {
@@ -754,6 +814,16 @@ export default function NotePage({ onChanged, onDeleted }) {
           hideMeta
           onSubmit={runRefactor}
           onCancel={() => setRefactorOpen(false)}
+        />
+      )}
+      {agentOpen && (
+        <AgentDialog onSubmit={runAgent} onCancel={() => setAgentOpen(false)} />
+      )}
+      {shareOpen && (
+        <ShareDialog
+          noteId={id}
+          title={note.title}
+          onClose={() => setShareOpen(false)}
         />
       )}
       {linkOpen && (

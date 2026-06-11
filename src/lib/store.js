@@ -88,22 +88,89 @@ const cloud = {
 
 const backend = isSupabaseConfigured ? cloud : local
 
+// id do usuário logado (setado pelo AuthContext) — separa próprias x compartilhadas
+let currentUserId = null
+export function setCurrentUser(id) {
+  currentUserId = id || null
+}
+const owned = (rows) =>
+  isSupabaseConfigured ? rows.filter((n) => n.user_id === currentUserId) : rows
+const shared = (rows) =>
+  isSupabaseConfigured ? rows.filter((n) => n.user_id && n.user_id !== currentUserId) : []
+
 /* ----------------- API pública ----------------- */
 export const notesApi = {
-  list: () => backend.list('notes', 'updated_at'),
+  // minhas notas (exclui agentes e compartilhadas comigo)
+  list: async () =>
+    owned((await backend.list('notes', 'updated_at')).filter((n) => !n.is_agent)),
+  // notas compartilhadas COMIGO (de outros usuários)
+  listShared: async () =>
+    shared((await backend.list('notes', 'updated_at')).filter((n) => !n.is_agent)),
   // objetivos são notas marcadas com is_goal = true, ordenados por position
   listGoals: async () =>
-    (await backend.list('notes', 'updated_at'))
-      .filter((n) => n.is_goal)
+    owned(await backend.list('notes', 'updated_at'))
+      .filter((n) => n.is_goal && !n.is_agent)
       .sort((a, b) => (a.position ?? 0) - (b.position ?? 0)),
   get: (id) => backend.get('notes', id),
   create: (data = {}) =>
     backend.insert('notes', {
       title: 'Sem título', content: '', emoji: '📄', tags: [],
-      is_goal: false, progress: 0, done: false, position: 0, ...data,
+      is_goal: false, is_agent: false, progress: 0, done: false, position: 0, ...data,
     }),
   update: (id, patch) => backend.update('notes', id, patch),
   remove: (id) => backend.remove('notes', id),
+}
+
+// Agentes = notas com is_agent = true (título = nome, content = prompt em Markdown)
+export const agentsApi = {
+  list: async () =>
+    owned((await backend.list('notes', 'updated_at')).filter((n) => n.is_agent)),
+  listShared: async () =>
+    shared((await backend.list('notes', 'updated_at')).filter((n) => n.is_agent)),
+  create: (data = {}) =>
+    notesApi.create({ is_agent: true, emoji: '🤖', title: 'Novo agente', ...data }),
+  update: (id, patch) => backend.update('notes', id, patch),
+  remove: (id) => backend.remove('notes', id),
+}
+
+// Lista de usuários (perfis) pra escolher com quem compartilhar
+export const usersApi = {
+  list: async () => {
+    if (!isSupabaseConfigured) return []
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, email, name')
+      .order('name', { nullsFirst: false })
+    if (error) throw error
+    return (data || []).filter((u) => u.id !== currentUserId)
+  },
+}
+
+// Compartilhamento (só na nuvem)
+export const sharesApi = {
+  listFor: async (noteId) => {
+    if (!isSupabaseConfigured) return []
+    const { data, error } = await supabase
+      .from('shares')
+      .select('*')
+      .eq('note_id', noteId)
+      .order('created_at')
+    if (error) throw error
+    return data
+  },
+  share: async (noteId, email) => {
+    const { data, error } = await supabase
+      .from('shares')
+      .insert({ note_id: noteId, shared_with_email: email.trim().toLowerCase() })
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  },
+  unshare: async (id) => {
+    const { error } = await supabase.from('shares').delete().eq('id', id)
+    if (error) throw error
+  },
 }
 
 export const habitsApi = {

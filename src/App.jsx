@@ -11,12 +11,14 @@ import { useAuth } from './context/AuthContext'
 import Home from './pages/Home'
 import Goals from './pages/Goals'
 import Habits from './pages/Habits'
+import Agents from './pages/Agents'
 import Settings from './pages/Settings'
 import NotePage from './pages/NotePage'
 import { notesApi, isSupabaseConfigured } from './lib/store'
 
 export default function App() {
   const [notes, setNotes] = useState([])
+  const [sharedNotes, setSharedNotes] = useState([])
   const [booting, setBooting] = useState(true)
   const [cmdk, setCmdk] = useState(false)
   const [navOpen, setNavOpen] = useState(false)
@@ -92,7 +94,10 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [navigate])
 
-  const refresh = useCallback(() => notesApi.list().then(setNotes).catch(() => {}), [])
+  const refresh = useCallback(() => {
+    notesApi.list().then(setNotes).catch(() => {})
+    notesApi.listShared().then(setSharedNotes).catch(() => {})
+  }, [])
   useEffect(() => { if (!needsAuth) refresh() }, [refresh, needsAuth])
 
   // loader inicial
@@ -136,7 +141,7 @@ export default function App() {
       {booting && <Loader />}
       {cmdk && <CommandPalette notes={notes} onNewNote={handleNewNote} onClose={() => setCmdk(false)} />}
       <button className="burger" onClick={() => setNavOpen(true)} aria-label="Abrir menu"><Menu size={26} /></button>
-      <Sidebar notes={sortedNotes} onNewNote={handleNewNote} onDeleteNote={handleDeleteNote} onReorderNotes={handleReorderNotes} open={navOpen} onClose={() => setNavOpen(false)} />
+      <Sidebar notes={sortedNotes} sharedNotes={sharedNotes} onNewNote={handleNewNote} onDeleteNote={handleDeleteNote} onReorderNotes={handleReorderNotes} open={navOpen} onClose={() => setNavOpen(false)} />
       <div className="main">
         <Starfield />
         {!isSupabaseConfigured && (
@@ -149,6 +154,7 @@ export default function App() {
             <Route path="/" element={<Home onNewNote={handleNewNote} onRefresh={refresh} pendingVoice={pendingVoice} onVoiceConsumed={() => setPendingVoice(false)} />} />
             <Route path="/goals" element={<Goals />} />
             <Route path="/habits" element={<Habits />} />
+            <Route path="/agents" element={<Agents />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/note/:id" element={<NotePage onChanged={refresh} onDeleted={handleDeleted} />} />
           </Routes>

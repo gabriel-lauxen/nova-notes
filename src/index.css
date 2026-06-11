@@ -1390,6 +1390,213 @@ a:hover {
   margin: 0;
 }
 
+/* diálogo de compartilhar */
+.share-ac {
+  position: relative;
+}
+.share-ac-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 5;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.4);
+  max-height: 230px;
+  overflow-y: auto;
+}
+.share-ac-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 7px;
+  text-align: left;
+  cursor: pointer;
+}
+.share-ac-item:hover {
+  background: var(--surface-hover);
+}
+.share-ac-name {
+  font-size: 13.5px;
+  color: var(--text);
+}
+.share-ac-email {
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+/* helper menor, em cor primária (caption) */
+.share-caption {
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: var(--accent);
+}
+.share-err {
+  color: #ff8a95;
+  font-size: 12.5px;
+  margin-top: 6px;
+}
+.share-row-icon {
+  display: inline-flex;
+  color: var(--accent);
+}
+.share-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+.share-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.share-row button {
+  flex: 0 0 auto;
+  color: var(--text-faint);
+  padding: 2px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.share-row button:hover {
+  color: #ff6b78;
+}
+
+/* seleção de agentes no diálogo /agente */
+.agent-pick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 12px;
+}
+.agent-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 130px;
+  padding: 7px 11px;
+  border-radius: 9px;
+  font-size: 13px;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.agent-chip:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.agent-chip.on {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.agent-chip-emoji {
+  font-size: 15px;
+}
+/* microfone na instrução do agente */
+.agent-instr {
+  position: relative;
+}
+.agent-instr textarea {
+  padding-right: 44px;
+}
+.agent-mic {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.agent-mic:hover {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.agent-mic.recording {
+  color: #ff5e6c;
+  border-color: #ff5e6c;
+  background: rgba(255, 94, 108, 0.16);
+  animation: voice-pulse 1.1s ease-in-out infinite;
+}
+
+/* página de agentes */
+.agent-empty {
+  color: var(--text-faint);
+  font-size: 14px;
+  padding: 20px 0;
+}
+.agent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.agent-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--surface) 45%, transparent);
+}
+.agent-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.agent-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 15px;
+}
+.agent-saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--accent);
+}
+.agent-del {
+  flex: 0 0 auto;
+  color: var(--text-faint);
+  padding: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.agent-del:hover {
+  color: #ff6b78;
+  background: var(--surface-hover);
+}
+.agent-prompt {
+  width: 100%;
+  resize: vertical;
+  font-size: 13.5px;
+  line-height: 1.5;
+  min-height: 90px;
+}
+
 /* bloco colapsável (toggle) */
 .toggle {
   margin: 0.5em 0;

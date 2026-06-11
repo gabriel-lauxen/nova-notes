@@ -6,7 +6,7 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Home, Target, CalendarCheck, Settings, Plus, FileText, Trash2 } from 'lucide-react'
+import { Home, Target, CalendarCheck, Settings, Plus, FileText, Trash2, Bot } from 'lucide-react'
 import ConfirmDialog from './ConfirmDialog'
 
 function NoteItem({ n, onContextMenu, onDelete }) {
@@ -84,7 +84,7 @@ function NoteItem({ n, onContextMenu, onDelete }) {
   )
 }
 
-export default function Sidebar({ notes, onNewNote, onDeleteNote, onReorderNotes, open, onClose }) {
+export default function Sidebar({ notes, sharedNotes = [], onNewNote, onDeleteNote, onReorderNotes, open, onClose }) {
   const navigate = useNavigate()
   const [menu, setMenu] = useState(null) // { id, x, y }
   const [confirm, setConfirm] = useState(null) // { id, title }
@@ -126,6 +126,9 @@ export default function Sidebar({ notes, onNewNote, onDeleteNote, onReorderNotes
         <NavLink to="/habits" className={({ isActive }) => 'nav-item' + (isActive ? ' active' : '')}>
           <CalendarCheck size={17} /> <span className="title">Hábitos</span>
         </NavLink>
+        <NavLink to="/agents" className={({ isActive }) => 'nav-item' + (isActive ? ' active' : '')}>
+          <Bot size={17} /> <span className="title">Agentes</span>
+        </NavLink>
 
         <div className="nav-section">Notas</div>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
@@ -141,6 +144,22 @@ export default function Sidebar({ notes, onNewNote, onDeleteNote, onReorderNotes
           </SortableContext>
         </DndContext>
         <button className="add-btn" onClick={onNewNote}><Plus size={15} /> Nova nota</button>
+
+        {sharedNotes.length > 0 && (
+          <>
+            <div className="nav-section">Compartilhadas</div>
+            {sharedNotes.map((n) => (
+              <NavLink
+                key={n.id}
+                to={`/note/${n.id}`}
+                className={({ isActive }) => 'nav-item' + (isActive ? ' active' : '')}
+              >
+                <span className="emoji">{n.emoji || <FileText size={15} />}</span>
+                <span className="title">{n.title || 'Sem título'}</span>
+              </NavLink>
+            ))}
+          </>
+        )}
 
         <div className="sidebar-footer">
           <NavLink to="/settings" className={({ isActive }) => 'nav-item' + (isActive ? ' active' : '')}>
