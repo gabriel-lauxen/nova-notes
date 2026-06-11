@@ -1,5 +1,7 @@
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useEditor, EditorContent, ReactNodeViewRenderer, NodeViewWrapper, NodeViewContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
+import CodeBlock from '@tiptap/extension-code-block'
+import { useState } from 'react'
 import Placeholder from '@tiptap/extension-placeholder'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
@@ -9,9 +11,67 @@ import TableRow from '@tiptap/extension-table-row'
 import TableHeader from '@tiptap/extension-table-header'
 import TableCell from '@tiptap/extension-table-cell'
 import { Markdown } from 'tiptap-markdown'
+import { Extension } from '@tiptap/core'
+import { Plugin, PluginKey } from '@tiptap/pm/state'
+import { Copy, Check } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { SlashCommands } from './slashCommands'
 import { ProgressTracker } from './ProgressTracker'
+import { Collapsible } from './Collapsible'
+
+// Garante sempre um parágrafo vazio no fim do documento, pra dar pra clicar
+// abaixo de blocos (tabela, código, toggle…) e digitar uma nova linha.
+const TrailingNode = Extension.create({
+  name: 'trailingNode',
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey('trailingNode'),
+        appendTransaction(transactions, _oldState, newState) {
+          if (!transactions.some((t) => t.docChanged)) return
+          const { doc, tr, schema } = newState
+          const last = doc.lastChild
+          const needs = !last || last.type.name !== 'paragraph' || last.content.size > 0
+          if (needs) return tr.insert(doc.content.size, schema.nodes.paragraph.create())
+        },
+      }),
+    ]
+  },
+})
+
+// Code block com botão de copiar (mantém o nome 'codeBlock' p/ serialização md)
+function CodeBlockView({ node }) {
+  const [copied, setCopied] = useState(false)
+  const copy = () => {
+    try {
+      navigator.clipboard.writeText(node.textContent || '').then(() => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 1400)
+      })
+    } catch {}
+  }
+  return (
+    <NodeViewWrapper className="codeblock">
+      <button
+        type="button"
+        className="code-copy"
+        contentEditable={false}
+        onClick={copy}
+        title={copied ? 'Copiado' : 'Copiar'}
+      >
+        {copied ? <Check size={14} /> : <Copy size={14} />}
+      </button>
+      <pre>
+        <NodeViewContent as="code" />
+      </pre>
+    </NodeViewWrapper>
+  )
+}
+const CodeBlockCopy = CodeBlock.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(CodeBlockView)
+  },
+})
 
 // TaskItem com node view própria: o checkbox atualiza o nó via getPos (sempre
 // atual) em qualquer modo — inclusive leitura — sem depender de identidade.
@@ -70,9 +130,14 @@ export default function Editor({ content, onChange, onEditor, editable = true })
   const editor = useEditor({
     editable,
     extensions: [
-      StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
+      StarterKit.configure({ heading: { levels: [1, 2, 3] }, codeBlock: false }),
+      CodeBlockCopy,
       Placeholder.configure({
-        placeholder: "Escreva algo, ou digite '/' para inserir blocos…",
+        includeChildren: true,
+        placeholder: ({ node }) =>
+          node.type.name === 'paragraph'
+            ? "Escreva algo, ou digite '/' para inserir blocos…"
+            : '',
       }),
       TaskList,
       CheckTaskItem.configure({ nested: true }),
@@ -82,6 +147,8 @@ export default function Editor({ content, onChange, onEditor, editable = true })
       TableHeader,
       TableCell,
       ProgressTracker,
+      Collapsible,
+      TrailingNode,
       SlashCommands,
       Markdown.configure({ html: true, linkify: true, transformPastedText: true, transformCopiedText: true }),
     ],

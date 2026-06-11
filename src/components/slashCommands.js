@@ -27,6 +27,14 @@ const ITEMS = [
     run: (c) => c.setHorizontalRule().run() },
   { title: 'Tabela', subtitle: 'Tabela 3×3 com cabeçalho', icon: '▦', keywords: 'tabela table grade',
     run: (c) => c.insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
+  { title: 'Toggle', subtitle: 'Bloco colapsável (título + conteúdo)', icon: '▸',
+    keywords: 'toggle colapsavel colapsável recolher expandir detalhes accordion dropdown',
+    run: (c) =>
+      c.insertContent({
+        type: 'toggle',
+        attrs: { open: true, title: '' },
+        content: [{ type: 'paragraph' }],
+      }).run() },
   { title: 'Marcador de progresso', subtitle: 'Grade de dias p/ hábito diário', icon: '▣',
     keywords: 'progresso habito dias tracker streak meta diaria checkbox',
     run: (c) => {
@@ -104,10 +112,26 @@ export const SlashCommands = Extension.create({
           const place = (props) => {
             const rect = props.clientRect?.()
             if (!rect || !popup) return
-            const menuH = popup.offsetHeight || 320
-            const below = rect.bottom + 6
-            const top = below + menuH > window.innerHeight ? rect.top - menuH - 6 : below
-            popup.style.left = `${rect.left}px`
+            // usa o viewport VISÍVEL (desconta o teclado no mobile)
+            const vv = window.visualViewport
+            const vTop = vv ? vv.offsetTop : 0
+            const vh = vv ? vv.height : window.innerHeight
+            // limita a altura ao espaço visível (rola se precisar)
+            const menuEl = popup.querySelector('.slash-menu')
+            if (menuEl) menuEl.style.maxHeight = Math.max(160, Math.min(320, vh - 16)) + 'px'
+            const menuH = popup.offsetHeight || 300
+            const menuW = popup.offsetWidth || 240
+
+            let top = rect.bottom + 6
+            // se não couber abaixo, tenta acima; senão encosta no topo visível
+            if (top + menuH > vTop + vh - 8) {
+              const above = rect.top - menuH - 6
+              top = above > vTop + 8 ? above : vTop + vh - menuH - 8
+            }
+            top = Math.max(vTop + 8, Math.min(top, vTop + vh - menuH - 8))
+            let left = Math.min(rect.left, window.innerWidth - menuW - 8)
+            left = Math.max(8, left)
+            popup.style.left = `${left}px`
             popup.style.top = `${top}px`
           }
 

@@ -11,6 +11,7 @@ import {
   MoreVertical,
   BookOpen,
   Tag,
+  ListChecks,
 } from "lucide-react";
 import Editor from "../components/Editor";
 import Spinner from "../components/Spinner";
@@ -186,9 +187,17 @@ export default function NotePage({ onChanged, onDeleted }) {
     const ed = editorRef.current;
     if (!ed) return;
     const current = ed.storage.markdown.getMarkdown();
-    // posiciona o "Gerando" no topo do corpo
-    setAiPos({ top: 0, left: 0 });
-    if (bodyRef.current) ed.chain().focus().scrollIntoView().run();
+    // posiciona o "Gerando" no cursor
+    if (bodyRef.current) {
+      ed.chain().focus().scrollIntoView().run();
+      try {
+        const c = ed.view.coordsAtPos(ed.state.selection.from);
+        const r = bodyRef.current.getBoundingClientRect();
+        setAiPos({ top: c.top - r.top, left: c.left - r.left });
+      } catch {
+        setAiPos({ top: 0, left: 0 });
+      }
+    }
     setAiBusy(true);
     try {
       const prompt =
@@ -315,12 +324,62 @@ export default function NotePage({ onChanged, onDeleted }) {
   // clique em link: nota interna navega no app, externo abre em nova aba
   const onBodyClick = (e) => {
     const a = e.target.closest && e.target.closest("a");
-    if (!a) return;
-    const href = a.getAttribute("href");
-    if (!href) return;
-    e.preventDefault();
-    if (href.startsWith("/note/")) navigate(href);
-    else window.open(href, "_blank", "noopener");
+    if (a) {
+      const href = a.getAttribute("href");
+      if (!href) return;
+      e.preventDefault();
+      if (href.startsWith("/note/")) navigate(href);
+      else window.open(href, "_blank", "noopener");
+      return;
+    }
+  };
+
+  // área clicável abaixo do editor -> garante uma linha no fim e foca nela
+  // (sem rolar pro topo: seta a seleção e foca o DOM com preventScroll)
+  const addLineAtEnd = () => {
+    if (readMode) return;
+    const ed = editorRef.current;
+    if (!ed) return;
+    const last = ed.state.doc.lastChild;
+    const emptyPara =
+      last && last.type.name === "paragraph" && last.content.size === 0;
+    if (!emptyPara) {
+      ed.chain()
+        .insertContentAt(ed.state.doc.content.size, { type: "paragraph" })
+        .run();
+    }
+    ed.commands.setTextSelection(ed.state.doc.content.size);
+    try {
+      ed.view.dom.focus({ preventScroll: true });
+    } catch {
+      ed.view.dom.focus();
+    }
+  };
+
+  // marca/desmarca todas as checkboxes (to-dos) da página
+  const toggleAllChecks = () => {
+    const ed = editorRef.current;
+    if (!ed) return;
+    let total = 0,
+      checked = 0;
+    ed.state.doc.descendants((n) => {
+      if (n.type.name === "taskItem") {
+        total++;
+        if (n.attrs.checked) checked++;
+      }
+    });
+    if (!total) return;
+    const target = checked < total; // se nem todas marcadas -> marca todas
+    ed.chain()
+      .focus()
+      .command(({ tr }) => {
+        tr.doc.descendants((n, pos) => {
+          if (n.type.name === "taskItem" && n.attrs.checked !== target)
+            tr.setNodeMarkup(pos, undefined, { ...n.attrs, checked: target });
+        });
+        return true;
+      })
+      .run();
   };
 
   const toggleGoal = () =>
@@ -574,6 +633,9 @@ export default function NotePage({ onChanged, onDeleted }) {
             onEditor={(ed) => (editorRef.current = ed)}
             editable={!readMode}
           />
+          {!readMode && (
+            <div className="editor-pad" onClick={addLineAtEnd} />
+          )}
         </div>
       </div>
 
@@ -620,6 +682,14 @@ export default function NotePage({ onChanged, onDeleted }) {
                     style={{ marginLeft: "auto", color: "var(--accent)" }}
                   />
                 )}
+              </button>
+              <button
+                onClick={() => {
+                  setHeadMenu(null);
+                  toggleAllChecks();
+                }}
+              >
+                <ListChecks size={14} /> Marcar/desmarcar todas
               </button>
 
               <button
