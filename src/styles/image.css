@@ -1,0 +1,44 @@
+/* imagens nas notas */
+.note-img {
+  margin: 12px 0;
+  line-height: 0;
+  text-align: center; /* centraliza a caixa (imagens redimensionadas) */
+}
+.note-img-box {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: top;
+}
+.note-img img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  display: block;
+}
+.note-img.selected img {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+/* alça de redimensionar no canto inferior direito */
+.img-resize {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg-elev);
+  box-shadow: 0 0 8px var(--accent-glow);
+  cursor: nwse-resize;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  touch-action: none;
+}
+.note-img-box:hover .img-resize,
+.note-img.selected .img-resize {
+  opacity: 1;
+}
+

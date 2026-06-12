@@ -2,6 +2,7 @@ import { Extension } from '@tiptap/core'
 import Suggestion from '@tiptap/suggestion'
 import { ReactRenderer } from '@tiptap/react'
 import SlashMenu from './SlashMenu'
+import { insertImageFiles } from './NovaImage'
 
 // Itens do menu "/". Cada um sabe como se transformar no bloco desejado.
 const ITEMS = [
@@ -27,6 +28,17 @@ const ITEMS = [
     run: (c) => c.setHorizontalRule().run() },
   { title: 'Tabela', subtitle: 'Tabela 3×3 com cabeçalho', icon: '▦', keywords: 'tabela table grade',
     run: (c) => c.insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
+  { title: 'Imagem', subtitle: 'Enviar uma imagem', icon: '🖼️',
+    keywords: 'imagem foto picture image upload anexar arquivo',
+    run: (c, editor) => {
+      c.run() // apaga o "/imagem"
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = 'image/*'
+      input.multiple = true
+      input.onchange = () => { if (input.files?.length) insertImageFiles(editor, input.files) }
+      input.click()
+    } },
   { title: 'Toggle', subtitle: 'Bloco colapsável (título + conteúdo)', icon: '▸',
     keywords: 'toggle colapsavel colapsável recolher expandir detalhes accordion dropdown',
     run: (c) =>

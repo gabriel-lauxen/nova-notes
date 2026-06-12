@@ -50,7 +50,7 @@ function HabitRow({ h, days, y, m, isThisMonth, today, onToggle, onOpenNote, onM
     <tr ref={setNodeRef} style={style} className={isDragging ? 'row-dragging' : ''}>
       <td className="habit-name-col">
         <div className="habit-name-wrap">
-          <button className="drag-handle" title="Arraste para reordenar" {...attributes} {...listeners}><GripVertical size={15} /></button>
+          <button className="reorder-handle" title="Arraste para reordenar" {...attributes} {...listeners}><GripVertical size={15} /></button>
           <button className="habit-name" onClick={() => onOpenNote(h)} title={h.note_id ? 'Abrir nota vinculada' : ''}>
             <span>{h.emoji || '✅'}</span>
             <span className="hn-text">{h.name}</span>

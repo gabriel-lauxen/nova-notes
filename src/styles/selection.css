@@ -1,0 +1,19 @@
+/* seleção de texto na cor primária com pouca opacidade */
+.editor-body ::selection,
+.editor-body::selection,
+.title-input::selection {
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+/* seleção de área estilo Notion: blocos inteiros marcados */
+.ProseMirror .block-selected {
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  border-radius: 6px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+/* com blocos marcados, esconde a seleção de texto nativa (visual limpo) */
+.ProseMirror .block-selected ::selection,
+.ProseMirror .block-selected::selection {
+  background: transparent;
+}
+

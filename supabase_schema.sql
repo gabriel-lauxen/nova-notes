@@ -150,3 +150,45 @@ create policy "notes_shared_update" on public.notes
 --    rápido com amigos, dá pra desativar "Confirm email" (Auth > Settings),
 --    assim o cadastro já loga sem precisar clicar no e-mail.
 -- ------------------------------------------------------------
+
+-- ============================================================
+-- IMAGENS NAS NOTAS  (Supabase Storage, gratuito no plano free)
+-- Bucket privado + URLs assinadas. Caminho: <user_id>/<uuid>.<ext>
+-- Rode este bloco no SQL editor do Supabase (é idempotente).
+-- ============================================================
+
+-- 1) bucket privado
+insert into storage.buckets (id, name, public)
+values ('note-images', 'note-images', false)
+on conflict (id) do nothing;
+
+-- 2) políticas (RLS já vem ligado em storage.objects)
+
+-- enviar: só na própria pasta (primeiro segmento do caminho = seu user id)
+drop policy if exists "note-images insert own" on storage.objects;
+create policy "note-images insert own" on storage.objects
+  for insert to authenticated
+  with check (
+    bucket_id = 'note-images'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- atualizar/apagar: só os próprios arquivos
+drop policy if exists "note-images modify own" on storage.objects;
+create policy "note-images modify own" on storage.objects
+  for update to authenticated
+  using (bucket_id = 'note-images' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "note-images delete own" on storage.objects;
+create policy "note-images delete own" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'note-images' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- ler (gerar URL assinada): qualquer usuário logado.
+-- os caminhos são UUIDs aleatórios (não adivinháveis) e isso permite que
+-- notas COMPARTILHADAS mostrem as imagens pra quem tem acesso.
+-- Se quiser travar só pro dono, troque por:  ... and (storage.foldername(name))[1] = auth.uid()::text
+drop policy if exists "note-images read authenticated" on storage.objects;
+create policy "note-images read authenticated" on storage.objects
+  for select to authenticated
+  using (bucket_id = 'note-images');

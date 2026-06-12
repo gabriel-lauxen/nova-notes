@@ -1,0 +1,563 @@
+/* ---------- home / jarvis ---------- */
+.home {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  /* no toque: arrastar o dedo move as partículas, sem rolar nem selecionar texto */
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+/* mas permite rolar a lista de hábitos do menu */
+.orbit-habits {
+  touch-action: pan-y;
+}
+.home canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0; /* galáxia na frente das estrelas de fundo (Starfield) */
+}
+/* enquanto carrega: o core fica um pouco menor e continua girando no centro */
+.home-loading canvas {
+  transform: scale(0.72);
+  transition: transform 0.5s ease;
+}
+/* no fim: as partículas implodem pro centro (feito no canvas via JS).
+   o canvas mantém a escala do carregar pra não dar salto. */
+.home-implode canvas {
+  transform: scale(0.72);
+}
+.home-loading .home-overlay,
+.home-loading .home-clock,
+.home-implode .home-overlay,
+.home-implode .home-clock {
+  opacity: 0 !important;
+  transition: opacity 0.4s ease;
+}
+/* fade do corpo do texto ao abrir a nota (não aparecer "seco") */
+.note-body {
+  animation: note-fade 0.6s ease both;
+}
+/* área clicável abaixo do editor: clicar cria/foca uma linha no fim */
+.editor-pad {
+  min-height: 42vh;
+  cursor: text;
+}
+@keyframes note-fade {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.home-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  text-align: center;
+}
+.home-hello {
+  font-size: 13px;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  opacity: 0;
+}
+.home-title {
+  font-size: clamp(40px, 7vw, 86px);
+  font-weight: 700;
+  letter-spacing: 3px;
+  opacity: 0;
+}
+.home-sub {
+  margin-top: 12px;
+  color: var(--text-dim);
+  font-size: 15px;
+  opacity: 0;
+  max-width: 420px;
+}
+.home-actions {
+  position: absolute;
+  bottom: 5vh;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  pointer-events: auto;
+  opacity: 0;
+}
+.home-clock {
+  position: absolute;
+  top: 26px;
+  right: 34px;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+  font-size: 14px;
+  letter-spacing: 1px;
+  opacity: 0;
+}
+
+/* ícone de atividades orbitando + mini-menu neon */
+.orbit-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+}
+/* fechado: orbita entre o subtítulo (atrás) e o "boa noite"/título (na frente) */
+.habit-orbit {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  transform-origin: top left;
+}
+.habit-orbit.open {
+  z-index: 70;
+}
+.orbit-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  background: radial-gradient(
+    circle at 50% 38%,
+    color-mix(in srgb, var(--accent) 24%, transparent),
+    transparent 70%
+  );
+  box-shadow:
+    0 0 18px var(--accent-glow),
+    inset 0 0 12px color-mix(in srgb, var(--accent) 18%, transparent);
+  text-shadow: 0 0 8px var(--accent-glow);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  animation: orbit-pulse 3s ease-in-out infinite;
+  transition:
+    box-shadow 0.2s,
+    transform 0.2s;
+}
+/* aro orbital ao redor do orbe */
+.orbit-icon::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  pointer-events: none;
+}
+.orbit-icon:hover {
+  box-shadow:
+    0 0 34px var(--accent-glow),
+    inset 0 0 20px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.orbit-icon svg {
+  filter: drop-shadow(0 0 6px var(--accent-glow));
+}
+@keyframes orbit-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 16px var(--accent-glow),
+      inset 0 0 12px color-mix(in srgb, var(--accent) 16%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 28px var(--accent-glow),
+      inset 0 0 18px color-mix(in srgb, var(--accent) 26%, transparent);
+  }
+}
+
+/* ---------- ícone de voz (gravação) ---------- */
+.voice-orbit {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 6;
+  transform-origin: top left;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.voice-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  background: radial-gradient(
+    circle at 50% 38%,
+    color-mix(in srgb, var(--accent) 24%, transparent),
+    transparent 70%
+  );
+  box-shadow:
+    0 0 18px var(--accent-glow),
+    inset 0 0 12px color-mix(in srgb, var(--accent) 18%, transparent);
+  cursor: pointer;
+  transition:
+    box-shadow 0.25s ease,
+    transform 0.15s ease;
+}
+.voice-btn svg {
+  filter: drop-shadow(0 0 6px var(--accent-glow));
+}
+.voice-btn:hover {
+  box-shadow:
+    0 0 34px var(--accent-glow),
+    inset 0 0 20px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.voice-btn:active {
+  transform: scale(0.94);
+}
+/* gravando: sem botão vermelho — só os cubos neon girando */
+.voice-btn.recording {
+  border-color: transparent;
+  background: none;
+  box-shadow: none;
+}
+.voice-btn.recording:hover {
+  box-shadow: none;
+}
+
+/* "jarvis core": núcleo de espinhos neon radiais contra-girando + estrela central */
+/* --cs = tamanho dos cubos (único ajuste). Tudo escala a partir dele. */
+.voice-core {
+  --cs: 88px;
+  width: var(--cs);
+  height: var(--cs);
+  flex: 0 0 auto; /* NÃO encolher dentro do botão flex */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  perspective: calc(var(--cs) * 6.5);
+  overflow: visible;
+}
+@media (max-width: 760px) {
+  .voice-core {
+    --cs: 44px;
+  }
+}
+
+/* formas 3D: dois cubos wireframe girando em eixos diferentes */
+.vc3-scene {
+  position: relative;
+  width: var(--cs);
+  height: var(--cs);
+  flex: 0 0 auto;
+  transform-style: preserve-3d;
+}
+.vc3 {
+  position: absolute;
+  transform-style: preserve-3d;
+}
+.vc3-a {
+  inset: 0;
+  --h: calc(var(--cs) * 0.5);
+  animation: vc3-spin-a 7s linear infinite;
+}
+.vc3-b {
+  width: calc(var(--cs) * 0.55);
+  height: calc(var(--cs) * 0.55);
+  top: calc(var(--cs) * 0.225);
+  left: calc(var(--cs) * 0.225);
+  --h: calc(var(--cs) * 0.275);
+  animation: vc3-spin-b 5s linear infinite;
+}
+.vf {
+  position: absolute;
+  inset: 0;
+  border: 1.4px solid var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+  background: color-mix(in srgb, var(--accent) 4%, transparent);
+}
+.vf-fr {
+  transform: translateZ(var(--h));
+}
+.vf-bk {
+  transform: rotateY(180deg) translateZ(var(--h));
+}
+.vf-rt {
+  transform: rotateY(90deg) translateZ(var(--h));
+}
+.vf-lf {
+  transform: rotateY(-90deg) translateZ(var(--h));
+}
+.vf-tp {
+  transform: rotateX(90deg) translateZ(var(--h));
+}
+.vf-bt {
+  transform: rotateX(-90deg) translateZ(var(--h));
+}
+@keyframes vc3-spin-a {
+  from {
+    transform: rotateX(-18deg) rotateY(0deg);
+  }
+  to {
+    transform: rotateX(-18deg) rotateY(360deg);
+  }
+}
+@keyframes vc3-spin-b {
+  from {
+    transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+  }
+  to {
+    transform: rotateX(360deg) rotateY(-360deg) rotateZ(0deg);
+  }
+}
+.vc-spike {
+  fill: color-mix(in srgb, var(--accent) 14%, transparent);
+  stroke: var(--accent);
+  stroke-width: 1.1;
+  stroke-linejoin: round;
+}
+.vc-spike-in {
+  fill: color-mix(in srgb, var(--accent) 26%, transparent);
+}
+.vc-star {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.1;
+  stroke-linejoin: round;
+  opacity: 0.85;
+}
+.vc-core-dot {
+  fill: var(--accent);
+}
+/* anéis redondos */
+.vc-ring {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1;
+  opacity: 0.45;
+}
+.vc-ring-in {
+  opacity: 0.3;
+}
+/* hexágono girando em 3D (flip no eixo vertical = scaleX) */
+.vc-hex {
+  fill: color-mix(in srgb, var(--accent) 16%, transparent);
+  stroke: var(--accent);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: vc-hexspin 2.4s ease-in-out infinite;
+}
+.vc-hex2 {
+  animation-delay: -1.2s;
+  opacity: 0.6;
+}
+@keyframes vc-hexspin {
+  0% {
+    transform: scaleX(1);
+  }
+  50% {
+    transform: scaleX(-1);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+/* camadas giram em sentidos opostos; escala (voz) é aplicada no grupo interno */
+.vc-spin-a {
+  animation: vc-rot 9s linear infinite;
+}
+.vc-spin-b {
+  animation: vc-rot 6.5s linear infinite reverse;
+}
+.vc-spin-c {
+  animation: vc-rot 12s linear infinite;
+}
+.vc-spin-a,
+.vc-spin-b,
+.vc-spin-c,
+.vc-scale {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes vc-rot {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.voice-btn.processing,
+.voice-btn.connecting {
+  cursor: default;
+}
+.voice-spin {
+  animation: voice-rot 0.9s linear infinite;
+}
+.voice-label {
+  font-size: 13px;
+  color: var(--accent);
+  text-shadow: 0 0 6px var(--accent-glow);
+  white-space: nowrap;
+}
+.voice-err {
+  position: absolute;
+  right: 16px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
+  z-index: 80;
+  max-width: min(86%, 320px);
+  padding: 10px 13px;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #ff8a95;
+  background: color-mix(in srgb, #ff4d5e 14%, var(--bg-elev));
+  border: 1px solid color-mix(in srgb, #ff4d5e 45%, transparent);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.voice-err span {
+  flex: 1;
+  min-width: 0;
+}
+.voice-err button {
+  flex: none;
+  background: none;
+  border: none;
+  color: #ff8a95;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+  opacity: 0.8;
+}
+.voice-err button:hover {
+  opacity: 1;
+}
+@keyframes voice-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 18px rgba(255, 77, 94, 0.5),
+      inset 0 0 12px rgba(255, 77, 94, 0.28);
+  }
+  50% {
+    box-shadow:
+      0 0 32px rgba(255, 77, 94, 0.85),
+      inset 0 0 18px rgba(255, 77, 94, 0.45);
+  }
+}
+@keyframes voice-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+@keyframes voice-rot {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.orbit-menu {
+  width: 196px;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: transparent;
+  box-shadow:
+    0 0 18px var(--accent-glow),
+    inset 0 0 14px color-mix(in srgb, var(--accent) 8%, transparent);
+  color: var(--accent);
+  text-shadow: 0 0 6px var(--accent-glow);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  animation: fade-in 0.35s ease both;
+}
+.orbit-menu-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.orbit-habits {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.orbit-habit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+  font-size: 13.5px;
+  cursor: pointer;
+  color: var(--accent);
+}
+.orbit-habit input {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.orbit-empty {
+  font-size: 13px;
+  color: color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+/* contraste do texto branco sobre as partículas */
+.home-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--bg) 72%, transparent),
+    transparent 70%
+  );
+}
+.home-hello,
+.home-title,
+.home-sub {
+  position: relative;
+  text-shadow: 0 2px 26px var(--bg);
+}
+/* profundidade: subtítulo atrás do ícone, "boa noite"/título na frente */
+.home-sub {
+  z-index: 1;
+}
+.home-hello {
+  z-index: 12;
+}
+.home-title {
+  color: var(--text);
+  z-index: 10;
+}
+

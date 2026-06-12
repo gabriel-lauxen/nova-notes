@@ -1,0 +1,72 @@
+@keyframes acc-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 transparent;
+  }
+  50% {
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
+}
+/* botão de microfone flutuante na nota (arrastável -> refatorar por voz) */
+.note-mic {
+  position: fixed;
+  z-index: 300;
+  width: 50px;
+  height: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg-elev));
+  border: 1px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  box-shadow: 0 0 16px var(--accent-glow);
+  cursor: grab;
+  touch-action: none;
+  transition:
+    left 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    right 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.2s ease,
+    opacity 0.2s ease,
+    transform 0.12s ease;
+}
+/* enquanto arrasta, segue o dedo sem transição */
+.note-mic.dragging {
+  transition: transform 0.12s ease;
+}
+.note-mic:active {
+  cursor: grabbing;
+  transform: scale(0.94);
+}
+.note-mic.recording {
+  border-color: var(--accent);
+  animation: acc-pulse 1.1s ease-in-out infinite;
+}
+.note-mic svg {
+  filter: drop-shadow(0 0 5px var(--accent-glow));
+}
+/* encostado na borda: vira uma abinha peeking pra não atrapalhar */
+.note-mic.dock-left {
+  left: -18px;
+  width: 44px;
+  height: 44px;
+  opacity: 0.78;
+  justify-content: flex-end;
+  padding-right: 5px;
+}
+.note-mic.dock-right {
+  left: auto;
+  right: -18px;
+  width: 44px;
+  height: 44px;
+  opacity: 0.78;
+  justify-content: flex-start;
+  padding-left: 5px;
+}
+.note-mic.dock-left:hover,
+.note-mic.dock-right:hover,
+.note-mic.dock-left.recording,
+.note-mic.dock-right.recording {
+  opacity: 1;
+}
+

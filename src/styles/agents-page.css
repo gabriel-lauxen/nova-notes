@@ -1,0 +1,59 @@
+/* página de agentes */
+.agent-empty {
+  color: var(--text-faint);
+  font-size: 14px;
+  padding: 20px 0;
+}
+.agent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.agent-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--surface) 45%, transparent);
+}
+.agent-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.agent-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 15px;
+}
+.agent-saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--accent);
+}
+.agent-del {
+  flex: 0 0 auto;
+  color: var(--text-faint);
+  padding: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.agent-del:hover {
+  color: #ff6b78;
+  background: var(--surface-hover);
+}
+.agent-prompt {
+  width: 100%;
+  resize: vertical;
+  font-size: 13.5px;
+  line-height: 1.5;
+  min-height: 90px;
+}
+

@@ -1,0 +1,177 @@
+/* ---------- responsivo: sidebar vira drawer ---------- */
+@media (max-width: 760px) {
+  .app {
+    grid-template-columns: 1fr;
+  }
+  .burger {
+    display: flex;
+  }
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 270px;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 210;
+    /* respeita o notch / safe area */
+    padding-top: calc(env(safe-area-inset-top, 0px) + 16px);
+    padding-left: calc(env(safe-area-inset-left, 0px) + 12px);
+  }
+  /* no modo claro: opacidade um pouco reduzida, mas legível sobre o backdrop */
+  :root[data-mode="light"] .sidebar {
+    background-color: color-mix(in srgb, var(--bg-elev) 78%, transparent);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.6);
+  }
+  .nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0, 0, 0, 0.5);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+    animation: fade-in 0.2s ease both;
+  }
+  .panel {
+    padding: calc(env(safe-area-inset-top, 0px) + 64px) 20px
+      calc(env(safe-area-inset-bottom, 0px) + 100px);
+    overflow-x: hidden;
+  }
+
+  /* tabelas: colunas pelo conteúdo + rolagem horizontal em vez de espremer */
+  .ProseMirror table {
+    table-layout: auto;
+    width: max-content;
+    min-width: 100%;
+  }
+  .ProseMirror th,
+  .ProseMirror td {
+    min-width: 124px;
+    white-space: normal;
+  }
+
+  /* sobe título/subtítulo (centro do texto) e o header de hábitos full-width */
+  .home-overlay {
+    padding-bottom: 12vh;
+  }
+  .habits-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .habits-actions .btn-primary {
+    white-space: nowrap;
+  }
+  .month-nav span {
+    min-width: 0;
+  }
+
+  /* header da nota: quebra em vez de estourar a tela */
+  .editor-page {
+    overflow-x: hidden;
+  }
+  .editor-head {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: calc(env(safe-area-inset-top, 0px) + 12px) 6px 12px 66px;
+    /* fixo no topo ao rolar */
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: color-mix(in srgb, var(--bg) 90%, transparent);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+  .editor-head .spacer {
+    display: block;
+    flex: 1;
+  }
+  .editor-head .goal-toggle {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+  .head-progress {
+    min-width: 0;
+    margin-left: 0;
+  }
+  .head-progress .range {
+    width: 90px;
+  }
+  /* indicador de salvamento só com ícone (não quebra o header) */
+  .save-tag {
+    margin-left: 4px;
+    font-size: 0;
+    gap: 0;
+  }
+  /* marcar objetivo + upload/download/excluir viram um menu ⋮ */
+  .editor-head .goal-toggle {
+    display: none;
+  }
+  .head-full {
+    display: none;
+  }
+  .head-more {
+    display: inline-flex;
+  }
+  .editor-body {
+    padding: 24px 18px 120px;
+  }
+  .editor-body .title-input {
+    font-size: 30px;
+  }
+  /* emoji quadrado, alinhado à esquerda */
+  .emoji-wrap {
+    display: block;
+  }
+  .emoji-input {
+    width: 52px;
+    height: 52px;
+    font-size: 38px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .home-clock {
+    top: calc(env(safe-area-inset-top, 0px) + 16px);
+    right: 18px;
+  }
+  .home-sub {
+    padding-left: 26px;
+    padding-right: 26px;
+    text-shadow: 1px 1px 2px rgb(0, 0, 0);
+  }
+  .home-actions {
+    bottom: 17vh;
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: 12px;
+  }
+  .home-actions .btn-neon {
+    width: 85vw;
+    justify-content: center;
+  }
+  .home-title {
+    font-size: clamp(54px, 16vw, 84px);
+  }
+  .metrics {
+    grid-template-columns: 1fr;
+  }
+
+  /* evita o zoom automático do iOS ao focar inputs (<16px) */
+  .field,
+  .tag-input,
+  .cmdk-input input,
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}

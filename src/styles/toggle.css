@@ -1,0 +1,114 @@
+/* bloco colapsável (toggle) */
+.toggle {
+  margin: 0.5em 0;
+}
+.toggle-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.toggle-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: -6px; /* alinha o ícone com o centro do checkbox */
+  flex: 0 0 auto;
+  color: var(--accent);
+  background: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.22s ease;
+}
+:root[data-mode="dark"] .toggle-arrow {
+  filter: drop-shadow(0 0 5px var(--accent-glow));
+}
+.toggle-arrow:hover,
+.toggle-arrow:active {
+  background: none;
+}
+.toggle.open .toggle-arrow {
+  transform: rotate(90deg);
+}
+/* no modo leitura, o cabeçalho inteiro é clicável */
+.ProseMirror[contenteditable="false"] .toggle-head {
+  cursor: pointer;
+}
+.toggle-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-weight: 600;
+  font-size: inherit;
+  padding: 2px 0;
+}
+.toggle.lv1 .toggle-title {
+  font-size: calc(16.5px * var(--note-fs, 1) * 1.6);
+  font-weight: 700;
+}
+.toggle.lv2 .toggle-title {
+  font-size: calc(16.5px * var(--note-fs, 1) * 1.35);
+  font-weight: 700;
+}
+.toggle.lv3 .toggle-title {
+  font-size: calc(16.5px * var(--note-fs, 1) * 1.15);
+  font-weight: 600;
+}
+/* botão pra trocar/voltar o tamanho do título (T → H1 → H2 → H3) */
+.toggle-level {
+  flex: 0 0 auto;
+  min-width: 26px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-faint);
+  border: 1px solid var(--border);
+  opacity: 0.7;
+  cursor: pointer;
+  transition:
+    opacity 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+}
+.toggle-level:hover {
+  opacity: 1;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.toggle-title::placeholder {
+  color: var(--text-faint);
+}
+
+/* animação de abrir/fechar (grid-rows 0fr -> 1fr) */
+.toggle-body-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s ease;
+  margin-left: 12px;
+  padding-left: 12px;
+}
+.toggle.open .toggle-body-wrap {
+  grid-template-rows: 1fr;
+}
+.toggle-body {
+  overflow: hidden;
+  min-height: 0;
+}
+.toggle.open .toggle-body {
+  padding: 2px 0;
+}
+/* placeholder dentro do toggle */
+.toggle-body .is-empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-faint);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+

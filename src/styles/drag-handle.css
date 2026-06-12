@@ -1,0 +1,38 @@
+/* handle de arrastar blocos (estilo Notion) — só no desktop */
+.drag-handle {
+  position: fixed;
+  width: 22px;
+  height: 26px;
+  z-index: 60;
+  cursor: grab;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='%238a93a6'%3E%3Ccircle cx='5' cy='4' r='1.5'/%3E%3Ccircle cx='11' cy='4' r='1.5'/%3E%3Ccircle cx='5' cy='8' r='1.5'/%3E%3Ccircle cx='11' cy='8' r='1.5'/%3E%3Ccircle cx='5' cy='12' r='1.5'/%3E%3Ccircle cx='11' cy='12' r='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 13px;
+  opacity: 0.45;
+  transition: opacity 0.15s ease;
+}
+.drag-handle:hover {
+  /* sem fundo, só clareia os pontinhos */
+  opacity: 0.9;
+}
+.drag-handle:active {
+  cursor: grabbing;
+}
+.drag-handle.hide {
+  display: none;
+}
+.ProseMirror.dragging .ProseMirror-selectednode {
+  outline: none;
+}
+/* linha que mostra onde o bloco vai cair */
+.nova-dropcursor {
+  border-radius: 3px;
+  opacity: 0.5;
+}
+@media (max-width: 760px), (hover: none) {
+  .drag-handle {
+    display: none !important;
+  }
+}
+

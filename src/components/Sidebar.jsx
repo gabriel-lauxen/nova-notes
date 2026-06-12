@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
@@ -6,7 +6,7 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Home, Target, CalendarCheck, Settings, Plus, FileText, Trash2, Bot } from 'lucide-react'
+import { Home, Target, CalendarCheck, Settings, Plus, FileText, Trash2, Bot, Search } from 'lucide-react'
 import ConfirmDialog from './ConfirmDialog'
 
 function NoteItem({ n, onContextMenu, onDelete }) {
@@ -16,16 +16,28 @@ function NoteItem({ n, onContextMenu, onDelete }) {
   const live = useRef(false)
   const sx = useRef(0), sy = useRef(0), swiping = useRef(false)
 
+  // enquanto o dnd-kit estiver reordenando, zera o swipe pra não encolher o item
+  useEffect(() => {
+    if (isDragging) {
+      swiping.current = false
+      live.current = false
+      setDx(0)
+      setOpen(false)
+    }
+  }, [isDragging])
+
   const onTouchStart = (e) => {
     listeners?.onTouchStart?.(e) // mantém o drag de reordenar (TouchSensor)
     const t = e.touches[0]
     sx.current = t.clientX; sy.current = t.clientY; swiping.current = false
   }
   const onTouchMove = (e) => {
+    if (isDragging) return // reordenando -> não interpreta como swipe
     const t = e.touches[0]
     const ddx = t.clientX - sx.current, ddy = t.clientY - sy.current
     if (!swiping.current) {
-      if (Math.abs(ddx) > 10 && Math.abs(ddx) > Math.abs(ddy) * 1.3) swiping.current = true
+      // só vira swipe se o gesto for claramente horizontal
+      if (Math.abs(ddx) > 12 && Math.abs(ddx) > Math.abs(ddy) * 1.6) swiping.current = true
       else return
     }
     live.current = true
@@ -41,10 +53,12 @@ function NoteItem({ n, onContextMenu, onDelete }) {
     swiping.current = false
   }
 
-  const revealed = open || dx < -2
+  const revealed = !isDragging && (open || dx < -2)
   const reveal = -dx // 0..72 -> quanto o item encolhe (revela o botão)
+  // reordenar só na vertical: zera o deslocamento horizontal do dnd-kit
+  const vTransform = transform ? { ...transform, x: 0 } : null
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: CSS.Transform.toString(vTransform),
     // o item ENCOLHE pela direita; o título fica no lugar (não desliza)
     width: revealed ? `calc(100% - ${reveal}px)` : undefined,
     transition: isDragging ? transition : live.current ? 'none' : 'width 0.2s ease, transform 0.2s ease',
@@ -53,7 +67,10 @@ function NoteItem({ n, onContextMenu, onDelete }) {
     ...(revealed ? { backgroundColor: 'var(--bg-elev)', overflow: 'hidden' } : null),
   }
   return (
-    <div className="nav-swipe">
+    <div
+      className={'nav-swipe' + (revealed ? ' swiping' : '')}
+      style={isDragging ? { zIndex: 50 } : undefined}
+    >
       {revealed && (
         <button
           className="nav-del"
@@ -84,7 +101,7 @@ function NoteItem({ n, onContextMenu, onDelete }) {
   )
 }
 
-export default function Sidebar({ notes, sharedNotes = [], onNewNote, onDeleteNote, onReorderNotes, open, onClose }) {
+export default function Sidebar({ notes, sharedNotes = [], onNewNote, onDeleteNote, onReorderNotes, onSearch, open, onClose }) {
   const navigate = useNavigate()
   const [menu, setMenu] = useState(null) // { id, x, y }
   const [confirm, setConfirm] = useState(null) // { id, title }
@@ -116,6 +133,11 @@ export default function Sidebar({ notes, sharedNotes = [], onNewNote, onDeleteNo
           <span className="logo">N</span>
           <span className="brand-name">NOVA</span>
         </div>
+
+        <button type="button" className="nav-item nav-search" onClick={onSearch}>
+          <Search size={17} /> <span className="title">Buscar</span>
+          <span className="nav-kbd">⌘K</span>
+        </button>
 
         <NavLink to="/" className={({ isActive }) => 'nav-item' + (isActive ? ' active' : '')} end>
           <Home size={17} /> <span className="title">Início</span>

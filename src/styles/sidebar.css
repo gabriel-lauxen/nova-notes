@@ -1,0 +1,215 @@
+/* ---------- burger / drawer mobile ---------- */
+.burger {
+  display: none;
+  position: fixed;
+  /* respeita o notch / safe area do iPhone */
+  top: calc(env(safe-area-inset-top, 0px) + 6px);
+  left: calc(env(safe-area-inset-left, 0px) + 12px);
+  z-index: 150;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  background: transparent;
+}
+/* glow neon só no ícone, apenas no modo escuro (no claro fica feio) */
+:root[data-mode="dark"] .burger svg {
+  filter: drop-shadow(0 0 4px var(--accent-glow))
+    drop-shadow(0 0 1px var(--accent));
+}
+.nav-backdrop {
+  display: none;
+}
+
+/* ---------- sidebar ---------- */
+.sidebar {
+  /* cor principal em baixa opacidade (~0.2) sobre o fundo */
+  background-color: color-mix(in srgb, var(--accent) 5%, transparent);
+  /* pontilhado fino e denso, estilo HUD/terminal futurista */
+  background-image: radial-gradient(
+    color-mix(in srgb, var(--accent) 15%, transparent) 0.7px,
+    transparent 0.9px
+  );
+  background-size: 7px 7px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 12px;
+  gap: 2px;
+  overflow-y: auto;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 6px 8px 16px;
+}
+.logo {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(140deg, var(--accent), var(--accent-strong));
+  color: var(--accent-contrast);
+  font-weight: 700;
+  font-size: 16px;
+  font-family: var(--font-mono);
+  box-shadow: 0 4px 14px var(--accent-glow);
+}
+.brand-name {
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 2.5px;
+}
+.nav-section {
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-faint);
+  padding: 18px 10px 7px;
+}
+.nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 8px 11px;
+  border-radius: 9px;
+  color: var(--text-dim);
+  font-size: 13.5px;
+  font-weight: 500;
+  width: 100%;
+  text-align: left;
+  text-decoration: none;
+  /* iPhone: segurar o item arrasta (reordenar) em vez de abrir o preview de link */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.nav-item:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+  text-decoration: none;
+}
+/* swipe-to-delete (mobile): arrasta o item pra esquerda e revela o botão */
+.nav-swipe {
+  position: relative;
+  border-radius: 9px;
+}
+/* só recorta quando está em swipe; durante o reorder fica visível pra não cortar o item */
+.nav-swipe.swiping {
+  overflow: hidden;
+}
+.nav-swipe .nav-item {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+.nav-swipe .nav-item .title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.nav-del {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  color: #ff6b78;
+  background: color-mix(in srgb, #ff4d5e 20%, transparent);
+  z-index: 0;
+}
+.nav-del:active {
+  background: color-mix(in srgb, #ff4d5e 32%, transparent);
+}
+.nav-item.active {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+.nav-item.active::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 16px;
+  border-radius: 3px;
+  background: var(--accent);
+}
+.nav-item svg {
+  opacity: 0.85;
+}
+.nav-item .emoji {
+  width: 18px;
+  text-align: center;
+  font-size: 14px;
+}
+.nav-item .title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* botão de busca (abre o ⌘K) */
+.nav-search {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  margin-bottom: 2px;
+}
+.nav-kbd {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-faint);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1px 6px;
+  letter-spacing: 0.5px;
+}
+
+.add-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  padding: 8px 11px;
+  border-radius: 9px;
+  color: var(--text-faint);
+  font-weight: 500;
+  font-size: 13.5px;
+  width: 100%;
+  text-align: left;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.add-btn:hover {
+  background: var(--surface-hover);
+  color: var(--accent-strong);
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 12px;
+}
+

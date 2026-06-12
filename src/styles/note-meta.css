@@ -1,0 +1,145 @@
+/* seletor de emoji */
+.emoji-wrap {
+  position: relative;
+  display: inline-block;
+}
+.emoji-input {
+  cursor: pointer;
+  border-radius: 12px;
+  transition: background 0.15s;
+}
+.emoji-input:hover {
+  background: var(--surface-hover);
+}
+.emoji-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+}
+.emoji-picker {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 91;
+  margin-top: 4px;
+  width: 320px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.45);
+}
+.emoji-group + .emoji-group {
+  margin-top: 8px;
+}
+.emoji-group-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-faint);
+  padding: 4px 4px 6px;
+}
+.emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+}
+.emoji-opt {
+  font-size: 20px;
+  line-height: 1;
+  padding: 6px;
+  border-radius: 8px;
+  transition: background 0.1s;
+}
+.emoji-opt:hover {
+  background: var(--accent-soft);
+}
+
+/* tags da nota */
+/* linha: emoji + botões (esquerda) | tags (direita, da direita p/ esquerda) */
+.title-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.title-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+/* botões de ícone cinza 80% (modo leitura, adicionar tag) */
+.meta-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: var(--text-faint);
+  opacity: 0.8;
+  transition:
+    opacity 0.15s,
+    background 0.15s,
+    color 0.15s;
+}
+.meta-btn:hover {
+  opacity: 1;
+  background: var(--surface-hover);
+}
+.meta-btn.active {
+  color: var(--accent);
+  opacity: 1;
+}
+.tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: -4px 0 16px;
+}
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  line-height: 1;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  border: 1px solid var(--border-strong);
+  border-radius: 99px;
+  padding: 4px 6px 4px 10px;
+}
+.tag-chip .tag-text {
+  line-height: 1;
+}
+.tag-chip button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  color: var(--accent-strong);
+  font-size: 15px;
+  line-height: 1;
+  padding: 0;
+  opacity: 0.7;
+}
+.tag-chip button:hover {
+  opacity: 1;
+}
+.tag-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 13px;
+  width: 90px;
+  border-bottom: 1px solid var(--border-strong);
+  padding: 2px 0;
+}
+

@@ -1,0 +1,179 @@
+/* ---------- hábitos ---------- */
+.habits-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.habits-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 14px;
+}
+.month-nav span {
+  min-width: 130px;
+  text-align: center;
+}
+
+.habit-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.habit-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+}
+.habit-table th,
+.habit-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 0;
+}
+.habit-table thead th {
+  position: sticky;
+  top: 0;
+  background: color-mix(in srgb, var(--bg-elev) 50%, transparent);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  padding: 6px 0;
+}
+.habit-name-col {
+  text-align: left;
+  min-width: 180px;
+  max-width: 220px;
+  padding: 0 12px !important;
+  position: sticky;
+  left: 0;
+  background: color-mix(in srgb, var(--bg-elev) 50%, transparent);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  z-index: 2;
+}
+tbody .habit-name-col {
+  background: color-mix(in srgb, var(--surface) 50%, transparent);
+}
+.day-col {
+  width: 30px;
+  min-width: 30px;
+  text-align: center;
+  color: var(--text-faint);
+}
+.day-col .wd {
+  display: block;
+  font-size: 9px;
+  text-transform: uppercase;
+}
+.day-col .dn {
+  display: block;
+  font-size: 11px;
+}
+.day-col.today {
+  color: var(--accent);
+  font-weight: 700;
+}
+.pct-col {
+  width: 56px;
+  text-align: center;
+}
+.act-col {
+  width: 40px;
+}
+
+.habit-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.row-dragging {
+  background: var(--surface-hover);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.habit-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  color: var(--text);
+}
+.habit-name:hover .hn-text {
+  color: var(--accent);
+}
+.hn-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hn-link {
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+.day-cell {
+  text-align: center;
+}
+.hcell {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  transition:
+    background 0.12s,
+    border-color 0.12s;
+  display: inline-block;
+}
+.hcell:hover {
+  border-color: var(--accent);
+}
+.hcell.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 6px var(--accent-glow);
+}
+.pct-pill {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent);
+}
+.habit-actions {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+.habit-actions .card-menu {
+  top: 30px;
+  right: 6px;
+}
+
+/* segmento de seleção (isolar hábito) */
+.seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.seg-btn {
+  padding: 6px 12px;
+  border-radius: 99px;
+  font-size: 12.5px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+}
+.seg-btn.on {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+

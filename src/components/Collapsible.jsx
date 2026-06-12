@@ -7,7 +7,7 @@ import { ChevronRight } from 'lucide-react'
 // (parágrafos, código, etc). Abre/fecha com animação. Corpo guarda a animação.
 const LEVEL_SCALE = [1, 1.6, 1.35, 1.15] // texto, h1, h2, h3
 
-function ToggleView({ node, updateAttributes, editor }) {
+function ToggleView({ node, updateAttributes, editor, getPos }) {
   const open = node.attrs.open
   const level = node.attrs.level || 0
   const toggle = () => updateAttributes({ open: !open })
@@ -56,6 +56,18 @@ function ToggleView({ node, updateAttributes, editor }) {
             if (e.key === 'Backspace' && level && e.target.selectionStart === 0) {
               e.preventDefault()
               updateAttributes({ level: 0 })
+              return
+            }
+            // Enter no título -> abre e pula pro corpo (primeira linha)
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              if (!open) updateAttributes({ open: true })
+              const pos = typeof getPos === 'function' ? getPos() : null
+              if (pos != null) {
+                try {
+                  editor.chain().focus().setTextSelection(pos + 2).run()
+                } catch {}
+              }
             }
           }}
           onMouseDown={(e) => {

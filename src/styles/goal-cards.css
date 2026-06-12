@@ -1,0 +1,199 @@
+/* ---------- toggle de objetivo + status ---------- */
+.goal-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px;
+  border-radius: 99px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  background: var(--surface);
+  transition: all 0.15s;
+}
+.goal-toggle:hover {
+  color: var(--text);
+}
+.goal-toggle.on {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+.save-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-faint);
+  margin-left: 12px;
+}
+.head-actions {
+  position: relative;
+  display: flex;
+  gap: 2px;
+}
+.head-more {
+  display: none;
+}
+.icon-btn.sm {
+  width: 26px;
+  height: 26px;
+}
+
+/* ---------- descrição renderizada do objetivo ---------- */
+.goal-desc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.goal-desc {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.goal-desc > * + * {
+  margin-top: 0.5em;
+}
+.goal-desc h1,
+.goal-desc h2,
+.goal-desc h3 {
+  font-size: 15px;
+  color: var(--text);
+  margin-top: 0.6em;
+}
+.goal-desc ul,
+.goal-desc ol {
+  padding-left: 1.2em;
+}
+.goal-desc code {
+  font-family: var(--font-mono);
+  background: var(--surface);
+  padding: 1px 5px;
+  border-radius: 5px;
+  font-size: 0.85em;
+}
+.goal-desc a {
+  color: var(--accent);
+}
+.goal-desc.empty {
+  font-style: italic;
+  color: var(--text-faint);
+  cursor: text;
+}
+/* skeleton de carregamento (shimmer na cor do tema) */
+.skeleton-card {
+  pointer-events: none;
+  min-height: 150px;
+  animation: fade-in 0.3s ease both;
+}
+.sk {
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--surface-hover) 25%,
+    color-mix(in srgb, var(--accent) 16%, var(--surface-hover)) 50%,
+    var(--surface-hover) 75%
+  );
+  background-size: 200% 100%;
+  animation: sk-shimmer 1.3s ease-in-out infinite;
+}
+.sk-title {
+  height: 18px;
+  width: 58%;
+  margin-bottom: 16px;
+}
+.sk-line {
+  height: 11px;
+  width: 100%;
+  margin-bottom: 9px;
+}
+.sk-line.short {
+  width: 65%;
+}
+.sk-bar {
+  height: 8px;
+  width: 100%;
+  border-radius: 99px;
+}
+@keyframes sk-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* rodapé do card: empurra a barra de progresso pro fundo (alinha entre cards) */
+.goal-foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+/* to-dos no card: só o checkbox, sem bullet */
+.goal-desc ul:has(input[type="checkbox"]) {
+  padding-left: 0;
+  list-style: none;
+}
+.goal-desc li.task-list-item,
+.goal-desc li:has(> input[type="checkbox"]) {
+  list-style: none;
+  margin-left: 0;
+}
+.goal-desc input[type="checkbox"] {
+  margin-right: 6px;
+  vertical-align: middle;
+  accent-color: var(--accent);
+}
+
+/* handle de reordenar (hábitos) + slider em edição */
+.reorder-handle {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-faint);
+  cursor: grab;
+  padding: 2px;
+  border-radius: 5px;
+  touch-action: none;
+}
+.reorder-handle:hover {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+.reorder-handle:active {
+  cursor: grabbing;
+}
+.goal-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.goal-slider-row .range {
+  flex: 1;
+}
+.btn-text {
+  align-self: flex-start;
+  font-size: 12.5px;
+  color: var(--accent);
+  padding: 4px 0;
+  font-weight: 500;
+}
+.btn-text:hover {
+  text-decoration: underline;
+}
+
+/* ---------- links no editor ---------- */
+.ProseMirror a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+

@@ -1,0 +1,60 @@
+/* ---------- menu de barra "/" ---------- */
+.slash-popup {
+  position: fixed;
+  z-index: 1000;
+}
+.slash-menu {
+  width: 270px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.4);
+}
+.slash-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 8px 9px;
+  border-radius: 8px;
+  text-align: left;
+  color: var(--text);
+}
+.slash-item.active {
+  background: var(--accent-soft);
+}
+.slash-ico {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+.slash-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.slash-t {
+  font-size: 14px;
+}
+.slash-s {
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+.slash-empty {
+  padding: 10px;
+  color: var(--text-faint);
+  font-size: 13px;
+}
+

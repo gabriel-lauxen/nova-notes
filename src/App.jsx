@@ -151,7 +151,7 @@ export default function App() {
       {booting && <Loader />}
       {cmdk && <CommandPalette notes={notes} onNewNote={handleNewNote} onClose={() => setCmdk(false)} />}
       <button className="burger" onClick={() => setNavOpen(true)} aria-label="Abrir menu"><Menu size={26} /></button>
-      <Sidebar notes={sortedNotes} sharedNotes={sharedNotes} onNewNote={handleNewNote} onDeleteNote={handleDeleteNote} onReorderNotes={handleReorderNotes} open={navOpen} onClose={() => setNavOpen(false)} />
+      <Sidebar notes={sortedNotes} sharedNotes={sharedNotes} onNewNote={handleNewNote} onDeleteNote={handleDeleteNote} onReorderNotes={handleReorderNotes} onSearch={() => setCmdk(true)} open={navOpen} onClose={() => setNavOpen(false)} />
       <div className="main">
         <Starfield />
         {!isSupabaseConfigured && (
