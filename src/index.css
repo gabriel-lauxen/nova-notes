@@ -1828,7 +1828,6 @@ a:hover {
   transition: grid-template-rows 0.25s ease;
   margin-left: 12px;
   padding-left: 12px;
-  border-left: 1.5px solid var(--border);
 }
 .toggle.open .toggle-body-wrap {
   grid-template-rows: 1fr;

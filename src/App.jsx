@@ -91,8 +91,13 @@ export default function App() {
         setCmdk((o) => !o)
       } else if ((e.metaKey || e.ctrlKey) && (e.key === 'j' || e.key === 'J')) {
         e.preventDefault()
-        navigate('/')
-        setPendingVoice(true)
+        // dentro de uma nota: refatora gravando a instrução; senão vai pra Home e grava
+        if (window.location.pathname.startsWith('/note/')) {
+          window.dispatchEvent(new CustomEvent('nova:refactor-voice'))
+        } else {
+          navigate('/')
+          setPendingVoice(true)
+        }
       }
     }
     window.addEventListener('keydown', onKey)

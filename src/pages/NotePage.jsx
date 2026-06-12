@@ -124,8 +124,9 @@ export default function NotePage({ onChanged, onDeleted }) {
     setMicPos((p) => {
       if (p == null)
         return { x: window.innerWidth - 74, y: window.innerHeight - 110 };
-      // mantém dentro da tela atual
+      // mantém dentro da tela atual, preservando o dock (abinha na borda)
       return {
+        ...p,
         x: Math.max(8, Math.min(window.innerWidth - 58, p.x)),
         y: Math.max(8, Math.min(window.innerHeight - 58, p.y)),
       };
@@ -831,37 +832,40 @@ export default function NotePage({ onChanged, onDeleted }) {
         </div>
       </div>
 
-      {!readMode && micPos && (
-        <button
-          className={
-            "note-mic " +
-            refRec +
-            (micPos.dock ? " dock-" + micPos.dock : "") +
-            (micDragging ? " dragging" : "")
-          }
-          style={
-            micPos.dock ? { top: micPos.y } : { left: micPos.x, top: micPos.y }
-          }
-          onPointerDown={onMicDown}
-          onPointerMove={onMicMove}
-          onPointerUp={onMicUp}
-          title={
-            refRec === "recording"
-              ? "Gravando — toque pra refatorar"
-              : refRec === "transcribing"
-                ? "Transcrevendo…"
-                : "Refatorar por voz (arraste pra mover)"
-          }
-        >
-          {refRec === "recording" ? (
-            <Square size={18} fill="currentColor" />
-          ) : refRec === "transcribing" || refRec === "generating" ? (
-            <RingLoader color={accentColor()} size={26} />
-          ) : (
-            <Mic size={micPos.dock ? 16 : 20} />
-          )}
-        </button>
-      )}
+      {!readMode &&
+        micPos &&
+        createPortal(
+          <button
+            className={
+              "note-mic " +
+              refRec +
+              (micPos.dock ? " dock-" + micPos.dock : "") +
+              (micDragging ? " dragging" : "")
+            }
+            style={
+              micPos.dock ? { top: micPos.y } : { left: micPos.x, top: micPos.y }
+            }
+            onPointerDown={onMicDown}
+            onPointerMove={onMicMove}
+            onPointerUp={onMicUp}
+            title={
+              refRec === "recording"
+                ? "Gravando — toque pra refatorar"
+                : refRec === "transcribing"
+                  ? "Transcrevendo…"
+                  : "Refatorar por voz (arraste pra mover)"
+            }
+          >
+            {refRec === "recording" ? (
+              <Square size={18} fill="currentColor" />
+            ) : refRec === "transcribing" || refRec === "generating" ? (
+              <RingLoader color={accentColor()} size={26} />
+            ) : (
+              <Mic size={micPos.dock ? 16 : 20} />
+            )}
+          </button>,
+          document.body,
+        )}
 
       {headMenu &&
         createPortal(
