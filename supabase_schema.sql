@@ -192,3 +192,66 @@ drop policy if exists "note-images read authenticated" on storage.objects;
 create policy "note-images read authenticated" on storage.objects
   for select to authenticated
   using (bucket_id = 'note-images');
+
+-- ============================================================
+-- NOTIFICAÇÕES (Web Push) — lembretes de nota + hábitos
+-- Rode este bloco no SQL editor do Supabase (idempotente).
+-- ============================================================
+
+-- assinaturas de push do navegador (uma por device/instalação)
+create table if not exists public.push_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  endpoint text not null unique,
+  p256dh text not null,
+  auth text not null,
+  user_agent text,
+  created_at timestamptz not null default now()
+);
+alter table public.push_subscriptions enable row level security;
+drop policy if exists "push_subs_owner" on public.push_subscriptions;
+create policy "push_subs_owner" on public.push_subscriptions
+  for all to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- lembretes (ligados a uma nota). next_fire_at é absoluto (UTC), calculado no
+-- cliente a partir do horário local. kind: once | daily | interval.
+create table if not exists public.reminders (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  note_id uuid references public.notes(id) on delete cascade,
+  text text not null default '',
+  kind text not null default 'once',          -- once | daily | interval
+  fire_at timestamptz,                          -- once: momento escolhido
+  time_of_day text,                             -- daily: 'HH:MM' (exibição)
+  interval_hours numeric,                       -- interval: a cada N horas
+  done boolean not null default false,
+  active boolean not null default true,
+  next_fire_at timestamptz,                     -- próximo disparo (UTC)
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists reminders_due_idx on public.reminders (next_fire_at)
+  where active and not done;
+alter table public.reminders enable row level security;
+drop policy if exists "reminders_owner" on public.reminders;
+create policy "reminders_owner" on public.reminders
+  for all to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- hábitos: notificação diária por hábito
+alter table public.habits add column if not exists notify boolean not null default false;
+alter table public.habits add column if not exists notify_time text;          -- 'HH:MM'
+alter table public.habits add column if not exists notify_next_at timestamptz; -- próximo disparo (UTC)
+create index if not exists habits_notify_idx on public.habits (notify_next_at)
+  where notify;
+
+-- ============================================================
+-- HIERARQUIA DE PÁGINAS (subpáginas estilo Notion)
+-- parent_id aponta pra nota-mãe. Ao apagar a mãe, os filhos sobem
+-- pro topo (set null) em vez de sumir junto.
+-- ============================================================
+alter table public.notes add column if not exists parent_id uuid references public.notes(id) on delete set null;
+create index if not exists notes_parent_idx on public.notes (parent_id);

@@ -115,7 +115,7 @@ export const notesApi = {
   create: (data = {}) =>
     backend.insert('notes', {
       title: 'Sem título', content: '', emoji: '📄', tags: [],
-      is_goal: false, is_agent: false, progress: 0, done: false, position: 0, ...data,
+      is_goal: false, is_agent: false, progress: 0, done: false, position: 0, parent_id: null, ...data,
     }),
   update: (id, patch) => backend.update('notes', id, patch),
   remove: (id) => backend.remove('notes', id),
@@ -182,6 +182,21 @@ export const habitsApi = {
     backend.insert('habits', { name: 'Novo hábito', emoji: '✅', note_id: null, log: {}, position: 0, ...data }),
   update: (id, patch) => backend.update('habits', id, patch),
   remove: (id) => backend.remove('habits', id),
+}
+
+// Lembretes (ligados a uma nota). Disparam push pela Edge Function.
+export const remindersApi = {
+  listForNote: async (noteId) => {
+    if (!noteId) return []
+    const rows = await backend.list('reminders', 'created_at')
+    return owned(rows).filter((r) => r.note_id === noteId)
+  },
+  create: (data = {}) =>
+    backend.insert('reminders', {
+      note_id: null, text: '', kind: 'once', done: false, active: true, ...data,
+    }),
+  update: (id, patch) => backend.update('reminders', id, patch),
+  remove: (id) => backend.remove('reminders', id),
 }
 
 export { isSupabaseConfigured }

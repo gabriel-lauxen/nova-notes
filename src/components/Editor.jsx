@@ -25,6 +25,7 @@ import { ProgressTracker } from './ProgressTracker'
 import { Collapsible } from './Collapsible'
 import { SmartDropcursor } from './SmartDropcursor'
 import { NovaImage } from './NovaImage'
+import { Reminder } from './Reminder'
 
 // Garante sempre um parágrafo vazio no fim do documento, pra dar pra clicar
 // abaixo de blocos (tabela, código, toggle…) e digitar uma nova linha.
@@ -360,6 +361,7 @@ export default function Editor({ content, onChange, onEditor, editable = true })
       TableHeader,
       TableCell,
       NovaImage.configure({ inline: false }),
+      Reminder,
       ProgressTracker,
       Collapsible,
       TrailingNode,

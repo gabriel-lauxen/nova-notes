@@ -32,3 +32,38 @@ self.addEventListener('fetch', (e) => {
     )
   }
 })
+
+// ---------- Web Push ----------
+// recebe o push do servidor (Edge Function) e mostra a notificação,
+// mesmo com o app fechado (o SW acorda sozinho)
+self.addEventListener('push', (e) => {
+  let data = {}
+  try { data = e.data ? e.data.json() : {} } catch { data = { body: e.data && e.data.text() } }
+  const title = data.title || 'NOVA'
+  const options = {
+    body: data.body || '',
+    icon: data.icon || '/icon-192.png',
+    badge: data.badge || '/icon-192.png',
+    tag: data.tag || undefined,
+    data: { url: data.url || '/' },
+    requireInteraction: !!data.requireInteraction,
+  }
+  e.waitUntil(self.registration.showNotification(title, options))
+})
+
+// clique na notificação: foca uma aba aberta do app ou abre uma nova
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close()
+  const url = (e.notification.data && e.notification.data.url) || '/'
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const c of list) {
+        if ('focus' in c) {
+          c.navigate?.(url)
+          return c.focus()
+        }
+      }
+      return self.clients.openWindow(url)
+    }),
+  )
+})

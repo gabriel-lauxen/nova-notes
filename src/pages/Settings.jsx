@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import { FONTS, PRESET_COLORS } from '../theme/palette'
@@ -6,13 +6,68 @@ import {
   getGeminiKey, setGeminiKey, getGroqKey, setGroqKey,
   getCerebrasKey, setCerebrasKey, getProvider, setProvider,
 } from '../lib/ai'
-import { Moon, Sun, LogOut, Check, Sparkles, ChevronDown } from 'lucide-react'
+import { Moon, Sun, LogOut, Check, Sparkles, ChevronDown, Bell, BellOff } from 'lucide-react'
+import { pushStatus, enablePush, disablePush } from '../lib/push'
 
 const PROVIDERS = [
   { id: 'groq', label: 'Groq' },
   { id: 'cerebras', label: 'Cerebras' },
   { id: 'gemini', label: 'Gemini' },
 ]
+
+// Ativa/desativa push neste dispositivo (lembretes de nota + hábitos)
+function PushSettings() {
+  const [status, setStatus] = useState('off')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+  const refresh = () => pushStatus().then(setStatus).catch(() => {})
+  useEffect(() => { refresh() }, [])
+
+  const enable = async () => {
+    setBusy(true); setErr('')
+    try { await enablePush(); await refresh() }
+    catch (e) { setErr(e.message || 'Falha ao ativar.') }
+    finally { setBusy(false) }
+  }
+  const disable = async () => {
+    setBusy(true)
+    try { await disablePush(); await refresh() } catch {}
+    finally { setBusy(false) }
+  }
+
+  return (
+    <div className="settings-row">
+      <label>Notificações</label>
+      <span className="hint">Receba lembretes de notas e hábitos no horário, mesmo com o app fechado.</span>
+      {status === 'unsupported' && (
+        <div className="hint">Este navegador não suporta push (ou faltam as chaves VAPID no deploy).</div>
+      )}
+      {status === 'need-install' && (
+        <div className="push-warn">No iPhone, adicione o app à Tela de Início e abra pelo ícone pra poder ativar.</div>
+      )}
+      {status === 'denied' && (
+        <div className="push-warn">Permissão bloqueada — habilite as notificações deste site nas configurações do navegador.</div>
+      )}
+      {(status === 'off' || status === 'enabled') && (
+        <div className="chip-row" style={{ marginTop: 10, alignItems: 'center' }}>
+          {status === 'enabled' ? (
+            <>
+              <span className="push-ok"><Check size={13} /> Ativadas neste dispositivo</span>
+              <button className="chip" onClick={disable} disabled={busy}>
+                <BellOff size={14} style={{ verticalAlign: 'middle' }} /> Desativar
+              </button>
+            </>
+          ) : (
+            <button className="btn-primary" onClick={enable} disabled={busy}>
+              <Bell size={14} style={{ verticalAlign: 'middle' }} /> {busy ? 'Ativando…' : 'Ativar notificações'}
+            </button>
+          )}
+        </div>
+      )}
+      {err && <div className="push-warn">{err}</div>}
+    </div>
+  )
+}
 
 export default function Settings() {
   const { settings, setColor, setFont, setMode } = useTheme()
@@ -98,6 +153,8 @@ export default function Settings() {
           </div>
         </div>
       )}
+
+      <PushSettings />
 
       <div className="settings-row">
         <label>Cor do tema</label>

@@ -104,6 +104,9 @@
 .nav-swipe {
   position: relative;
   border-radius: 9px;
+  /* é um flex item da sidebar (coluna): não pode encolher na vertical, senão
+     ao virar overflow:hidden no swipe o min-height cai pra 0 e colapsa */
+  flex-shrink: 0;
 }
 /* só recorta quando está em swipe; durante o reorder fica visível pra não cortar o item */
 .nav-swipe.swiping {

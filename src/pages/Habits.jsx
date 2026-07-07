@@ -8,7 +8,7 @@ import {
   SortableContext, useSortable, arrayMove, verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, ChevronLeft, ChevronRight, MoreVertical, Trash2, Pencil, Link2, ExternalLink, GripVertical } from 'lucide-react'
+import { Plus, ChevronLeft, ChevronRight, MoreVertical, Trash2, Pencil, Link2, ExternalLink, GripVertical, Bell } from 'lucide-react'
 import { habitsApi, notesApi } from '../lib/store'
 import EmojiPicker from '../components/EmojiPicker'
 
@@ -19,6 +19,15 @@ const stop = (e) => e.stopPropagation()
 const pad = (n) => String(n).padStart(2, '0')
 const keyOf = (y, m, d) => `${y}-${pad(m + 1)}-${pad(d)}`
 const daysInMonth = (y, m) => new Date(y, m + 1, 0).getDate()
+
+// próximo disparo (UTC, ISO) pra um horário 'HH:MM' no fuso local
+const nextDaily = (time) => {
+  const [hh, mm] = (time || '09:00').split(':').map(Number)
+  const d = new Date()
+  d.setHours(hh || 0, mm || 0, 0, 0)
+  if (d.getTime() <= Date.now()) d.setDate(d.getDate() + 1)
+  return d.toISOString()
+}
 
 function streaks(log, y, m) {
   const n = daysInMonth(y, m)
@@ -56,6 +65,10 @@ function HabitRow({ h, days, y, m, isThisMonth, today, onToggle, onOpenNote, onM
             <span className="hn-text">{h.name}</span>
             {h.note_id && <ExternalLink size={13} className="hn-link" />}
           </button>
+          <div className="habit-name-actions">
+            {h.notify && <Bell size={14} className="hn-bell" title={`Notifica às ${h.notify_time || '09:00'}`} />}
+            <button className="icon-btn sm" onClick={(e) => onMenu(h.id, e)}><MoreVertical size={16} /></button>
+          </div>
         </div>
       </td>
       {days.map((d) => {
@@ -63,9 +76,6 @@ function HabitRow({ h, days, y, m, isThisMonth, today, onToggle, onOpenNote, onM
         return <td key={d} className="day-cell"><button className={'hcell' + (on ? ' on' : '')} onClick={() => onToggle(h, d)} /></td>
       })}
       <td className="pct-col"><span className="pct-pill">{pct}%</span></td>
-      <td className="act-col">
-        <button className="icon-btn sm" onClick={(e) => onMenu(h.id, e)}><MoreVertical size={16} /></button>
-      </td>
     </tr>
   )
 }
@@ -126,6 +136,17 @@ export default function Habits() {
   }
   const remove = async (id) => { setMenu(null); await habitsApi.remove(id); refresh() }
   const openNote = (h) => { if (h.note_id) navigate(`/note/${h.note_id}`) }
+
+  // notificação diária por hábito
+  const setNotify = (h, on) => {
+    if (on) {
+      const time = h.notify_time || '09:00'
+      patch(h.id, { notify: true, notify_time: time, notify_next_at: nextDaily(time) })
+    } else {
+      patch(h.id, { notify: false, notify_next_at: null })
+    }
+  }
+  const setNotifyTime = (h, time) => patch(h.id, { notify_time: time, notify_next_at: nextDaily(time) })
 
   const openMenu = (id, e) => {
     e.stopPropagation()
@@ -193,7 +214,6 @@ export default function Habits() {
                     return <th key={d} className={'day-col' + (isToday ? ' today' : '')}><span className="wd">{WD[wd]}</span><span className="dn">{d}</span></th>
                   })}
                   <th className="pct-col">Mês</th>
-                  <th className="act-col"></th>
                 </tr>
               </thead>
               <tbody>
@@ -250,6 +270,25 @@ export default function Habits() {
               <option value="">— Nenhuma —</option>
               {notes.map((nt) => <option key={nt.id} value={nt.id}>{nt.emoji} {nt.title || 'Sem título'}</option>)}
             </select>
+
+            <div className="habit-notify">
+              <label className="hn-toggle">
+                <input type="checkbox" checked={!!h.notify} onChange={(e) => setNotify(h, e.target.checked)} />
+                <span>Notificar todo dia</span>
+              </label>
+              {h.notify && (
+                <input
+                  type="time"
+                  className="field hn-time"
+                  value={h.notify_time || '09:00'}
+                  onChange={(e) => setNotifyTime(h, e.target.value)}
+                />
+              )}
+            </div>
+            {h.notify && (
+              <div className="hn-hint">Ative as notificações em Configurações pra receber no horário.</div>
+            )}
+
             <button className="btn-text" style={{ marginTop: 12 }} onClick={() => setEditing(null)}>Concluir</button>
           </div>
         )

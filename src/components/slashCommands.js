@@ -20,6 +20,12 @@ const ITEMS = [
     run: (c) => c.toggleOrderedList().run() },
   { title: 'To-do', subtitle: 'Lista de tarefas', icon: '☑', keywords: 'todo tarefa checkbox task',
     run: (c) => c.toggleTaskList().run() },
+  { title: 'Lembrete', subtitle: 'To-do que te notifica na hora certa', icon: '🔔',
+    keywords: 'lembrete reminder notificacao notificação alarme aviso push alerta',
+    run: (c) => {
+      c.run() // apaga o "/lembrete"
+      window.dispatchEvent(new CustomEvent('nova:add-reminder'))
+    } },
   { title: 'Citação', subtitle: 'Bloco de citação', icon: '❝', keywords: 'citacao quote blockquote',
     run: (c) => c.toggleBlockquote().run() },
   { title: 'Código', subtitle: 'Bloco de código', icon: '</>', keywords: 'codigo code pre',

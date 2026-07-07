@@ -24,11 +24,14 @@ import EmojiPicker from "../components/EmojiPicker";
 import AIDialog from "../components/AIDialog";
 import AgentDialog from "../components/AgentDialog";
 import ShareDialog from "../components/ShareDialog";
+import ReminderDialog from "../components/ReminderDialog";
+import { computeSchedule } from "../components/Reminder";
 import { RingLoader } from "react-spinners";
 import { marked } from "marked";
 import { generateNote, transcribe } from "../lib/ai";
 import { recordVoice } from "../lib/recorder";
-import { notesApi } from "../lib/store";
+import { notesApi, remindersApi } from "../lib/store";
+import { isSupabaseConfigured } from "../lib/supabase";
 
 // 5 presets de tamanho de fonte (fator de escala)
 const FONT_SCALES = [0.85, 0.93, 1, 1.12, 1.28];
@@ -77,6 +80,9 @@ export default function NotePage({ onChanged, onDeleted }) {
   const [recording, setRecording] = useState(false);
   const [readMode, setReadMode] = useState(false);
   const [tagAdding, setTagAdding] = useState(false);
+  const [reminderCfg, setReminderCfg] = useState(null); // null | { id, initial }
+  const reminderCache = useRef({});
+  const remSyncTimer = useRef(null);
 
   // só mostra o loader se demorar mais de 500ms
   const [showLoader, setShowLoader] = useState(false);
@@ -111,6 +117,8 @@ export default function NotePage({ onChanged, onDeleted }) {
   const refStopRef = useRef(null);
   const runVoiceRef = useRef(null);
   const runRefactorVoiceRef = useRef(null);
+  const addReminderRef = useRef(null);
+  const openReminderConfigRef = useRef(null);
 
   // botão de microfone flutuante (arrastável, posição salva no localStorage)
   const [micPos, setMicPos] = useState(() => {
@@ -221,12 +229,18 @@ export default function NotePage({ onChanged, onDeleted }) {
     const openRefactor = () => setRefactorOpen(true);
     const openAgent = () => setAgentOpen(true);
     const refVoice = () => runRefactorVoiceRef.current?.();
+    const addRem = () => addReminderRef.current?.();
+    const cfgRem = (e) => openReminderConfigRef.current?.(e.detail?.id);
+    const doneRem = (e) => setReminderDone(e.detail?.id, e.detail?.done);
     window.addEventListener("nova:add-link", openLink);
     window.addEventListener("nova:ai-generate", openAi);
     window.addEventListener("nova:ai-voice", openVoice);
     window.addEventListener("nova:ai-refactor", openRefactor);
     window.addEventListener("nova:ai-agent", openAgent);
     window.addEventListener("nova:refactor-voice", refVoice);
+    window.addEventListener("nova:add-reminder", addRem);
+    window.addEventListener("nova:reminder-config", cfgRem);
+    window.addEventListener("nova:reminder-done", doneRem);
     return () => {
       window.removeEventListener("nova:add-link", openLink);
       window.removeEventListener("nova:ai-generate", openAi);
@@ -234,6 +248,9 @@ export default function NotePage({ onChanged, onDeleted }) {
       window.removeEventListener("nova:ai-refactor", openRefactor);
       window.removeEventListener("nova:ai-agent", openAgent);
       window.removeEventListener("nova:refactor-voice", refVoice);
+      window.removeEventListener("nova:add-reminder", addRem);
+      window.removeEventListener("nova:reminder-config", cfgRem);
+      window.removeEventListener("nova:reminder-done", doneRem);
     };
   }, []);
 
@@ -455,6 +472,104 @@ export default function NotePage({ onChanged, onDeleted }) {
   };
   runVoiceRef.current = runVoice;
 
+  // ---------- lembretes ----------
+  const findReminderNode = (rid) => {
+    const ed = editorRef.current;
+    if (!ed) return null;
+    let found = null;
+    ed.state.doc.descendants((node, pos) => {
+      if (node.type.name === "reminder" && node.attrs.id === rid) {
+        found = { node, pos };
+        return false;
+      }
+    });
+    return found;
+  };
+  const updateReminderNode = (rid, attrs) => {
+    const ed = editorRef.current;
+    const f = findReminderNode(rid);
+    if (ed && f) ed.view.dispatch(ed.state.tr.setNodeMarkup(f.pos, undefined, { ...f.node.attrs, ...attrs }));
+  };
+
+  const addReminder = async () => {
+    const ed = editorRef.current;
+    if (!ed) return;
+    let row;
+    try {
+      row = await remindersApi.create({ note_id: id, text: "", kind: "once" });
+    } catch {
+      return;
+    }
+    reminderCache.current[row.id] = "";
+    ed.chain().focus().insertContent({ type: "reminder", attrs: { id: row.id, done: false, kind: "once" } }).run();
+    setReminderCfg({ id: row.id, initial: { kind: "once" } });
+  };
+
+  const openReminderConfig = (rid) => {
+    const f = findReminderNode(rid);
+    const a = f?.node.attrs;
+    setReminderCfg({
+      id: rid,
+      initial: a ? { kind: a.kind, fireAt: a.fireAt, time: a.time, intervalHours: a.intervalHours } : { kind: "once" },
+    });
+  };
+
+  const saveReminderConfig = async (cfg) => {
+    const rid = reminderCfg?.id;
+    setReminderCfg(null);
+    if (!rid) return;
+    const { next_fire_at, summary } = computeSchedule(cfg);
+    updateReminderNode(rid, {
+      kind: cfg.kind,
+      fireAt: cfg.fireAt || null,
+      time: cfg.time || null,
+      intervalHours: cfg.intervalHours || null,
+      summary,
+    });
+    try {
+      await remindersApi.update(rid, {
+        kind: cfg.kind,
+        fire_at: cfg.kind === "once" ? next_fire_at : null,
+        time_of_day: cfg.time || null,
+        interval_hours: cfg.intervalHours || null,
+        next_fire_at,
+        active: true,
+        done: false,
+      });
+    } catch {}
+    editorRef.current?.chain().focus().run();
+  };
+
+  const setReminderDone = (rid, done) => {
+    remindersApi.update(rid, { done, active: !done }).catch(() => {});
+  };
+  addReminderRef.current = addReminder;
+  openReminderConfigRef.current = openReminderConfig;
+
+  // sincroniza texto dos lembretes e apaga do banco os removidos da nota
+  const syncReminders = async () => {
+    const ed = editorRef.current;
+    if (!ed || !isSupabaseConfigured) return;
+    const present = new Map();
+    ed.state.doc.descendants((node) => {
+      if (node.type.name === "reminder" && node.attrs.id) present.set(node.attrs.id, node.textContent || "");
+    });
+    for (const [rid, text] of present) {
+      if (reminderCache.current[rid] !== text) {
+        reminderCache.current[rid] = text;
+        remindersApi.update(rid, { text }).catch(() => {});
+      }
+    }
+    try {
+      const rows = await remindersApi.listForNote(id);
+      for (const r of rows)
+        if (!present.has(r.id)) {
+          remindersApi.remove(r.id).catch(() => {});
+          delete reminderCache.current[r.id];
+        }
+    } catch {}
+  };
+
   const queueSave = (patch) => {
     setNote((n) => ({ ...n, ...patch }));
     setStatus("saving");
@@ -475,6 +590,8 @@ export default function NotePage({ onChanged, onDeleted }) {
       patch.done = patch.progress === 100;
     }
     queueSave(patch);
+    clearTimeout(remSyncTimer.current);
+    remSyncTimer.current = setTimeout(syncReminders, 900);
   };
 
   const exportMd = () => {
@@ -1000,6 +1117,13 @@ export default function NotePage({ onChanged, onDeleted }) {
           noteId={id}
           title={note.title}
           onClose={() => setShareOpen(false)}
+        />
+      )}
+      {reminderCfg && (
+        <ReminderDialog
+          initial={reminderCfg.initial}
+          onSave={saveReminderConfig}
+          onCancel={() => setReminderCfg(null)}
         />
       )}
       {linkOpen && (
