@@ -32,6 +32,7 @@ import { generateNote, transcribe } from "../lib/ai";
 import { recordVoice } from "../lib/recorder";
 import { notesApi, remindersApi } from "../lib/store";
 import { isSupabaseConfigured } from "../lib/supabase";
+import { isAncestor } from "../lib/tree";
 
 // 5 presets de tamanho de fonte (fator de escala)
 const FONT_SCALES = [0.85, 0.93, 1, 1.12, 1.28];
@@ -119,6 +120,7 @@ export default function NotePage({ onChanged, onDeleted }) {
   const runRefactorVoiceRef = useRef(null);
   const addReminderRef = useRef(null);
   const openReminderConfigRef = useRef(null);
+  const addSubpageRef = useRef(null);
 
   // botão de microfone flutuante (arrastável, posição salva no localStorage)
   const [micPos, setMicPos] = useState(() => {
@@ -232,6 +234,7 @@ export default function NotePage({ onChanged, onDeleted }) {
     const addRem = () => addReminderRef.current?.();
     const cfgRem = (e) => openReminderConfigRef.current?.(e.detail?.id);
     const doneRem = (e) => setReminderDone(e.detail?.id, e.detail?.done);
+    const addSub = () => addSubpageRef.current?.();
     window.addEventListener("nova:add-link", openLink);
     window.addEventListener("nova:ai-generate", openAi);
     window.addEventListener("nova:ai-voice", openVoice);
@@ -241,6 +244,7 @@ export default function NotePage({ onChanged, onDeleted }) {
     window.addEventListener("nova:add-reminder", addRem);
     window.addEventListener("nova:reminder-config", cfgRem);
     window.addEventListener("nova:reminder-done", doneRem);
+    window.addEventListener("nova:add-subpage", addSub);
     return () => {
       window.removeEventListener("nova:add-link", openLink);
       window.removeEventListener("nova:ai-generate", openAi);
@@ -251,6 +255,7 @@ export default function NotePage({ onChanged, onDeleted }) {
       window.removeEventListener("nova:add-reminder", addRem);
       window.removeEventListener("nova:reminder-config", cfgRem);
       window.removeEventListener("nova:reminder-done", doneRem);
+      window.removeEventListener("nova:add-subpage", addSub);
     };
   }, []);
 
@@ -546,6 +551,37 @@ export default function NotePage({ onChanged, onDeleted }) {
   addReminderRef.current = addReminder;
   openReminderConfigRef.current = openReminderConfig;
 
+  // ---------- subpáginas / hierarquia ----------
+  const addSubpage = async () => {
+    const ed = editorRef.current;
+    if (!ed) return;
+    let child;
+    try {
+      child = await notesApi.create({ parent_id: id, title: "Nova subpágina" });
+    } catch {
+      return;
+    }
+    ed.chain().focus().insertContent(`<a href="/note/${child.id}">${child.title}</a> `).run();
+    try {
+      await notesApi.update(id, { content: ed.storage.markdown.getMarkdown() });
+    } catch {}
+    onChanged?.();
+    navigate(`/note/${child.id}`);
+  };
+  addSubpageRef.current = addSubpage;
+
+  // aninha uma nota existente (mencionada) como filha da atual, evitando ciclo
+  const linkNoteAsChild = async (childId) => {
+    if (!childId || childId === id) return;
+    const map = new Map(allNotes.map((n) => [n.id, n]));
+    if (note) map.set(id, note);
+    if (isAncestor(map, id, childId)) return; // child é ancestral -> evita ciclo
+    try {
+      await notesApi.update(childId, { parent_id: id });
+      onChanged?.();
+    } catch {}
+  };
+
   // sincroniza texto dos lembretes e apaga do banco os removidos da nota
   const syncReminders = async () => {
     const ed = editorRef.current;
@@ -622,6 +658,9 @@ export default function NotePage({ onChanged, onDeleted }) {
     const ed = editorRef.current;
     if (ed)
       ed.chain().focus().insertContent(`<a href="${href}">${text}</a> `).run();
+    // mencionar uma nota interna aninha ela como subpágina desta
+    const m = /\/note\/([\w-]+)/.exec(href || "");
+    if (m) linkNoteAsChild(m[1]);
   };
 
   // clique em link: nota interna navega no app, externo abre em nova aba

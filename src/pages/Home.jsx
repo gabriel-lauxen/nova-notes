@@ -586,7 +586,7 @@ export default function Home({
           {greeting()}
           {firstName ? `, ${firstName}` : ""}
         </div>
-        <h1 className="home-title">NOVA</h1>
+        <h1 className="home-title glitch" data-text="NOVA">NOVA</h1>
         <p className="home-sub">
           Seu segundo cérebro. Capture ideias, organize notas e acompanhe seus
           objetivos.

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
@@ -6,11 +6,14 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Home, Target, CalendarCheck, Settings, Plus, FileText, Trash2, Bot, Search } from 'lucide-react'
+import { Home, Target, CalendarCheck, Settings, Plus, FileText, Trash2, Bot, Search, ChevronRight } from 'lucide-react'
 import ConfirmDialog from './ConfirmDialog'
 import PinwheelIcon from './PinwheelIcon'
+import { buildTree, flattenTree, removeChildrenOf, getProjection } from '../lib/tree'
 
-function NoteItem({ n, onContextMenu, onDelete }) {
+const INDENT = 18 // px de indentação por nível
+
+function NoteItem({ n, depth = 0, hasChildren = false, collapsed = false, onToggleCollapse, onAddChild, ghostDepth, onContextMenu, onDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: n.id })
   const [dx, setDx] = useState(0)
   const [open, setOpen] = useState(false)
@@ -67,10 +70,11 @@ function NoteItem({ n, onContextMenu, onDelete }) {
     zIndex: isDragging ? 50 : undefined,
     ...(revealed ? { backgroundColor: 'var(--bg-elev)', overflow: 'hidden' } : null),
   }
+  const indent = (ghostDepth != null ? ghostDepth : depth) * INDENT
   return (
     <div
       className={'nav-swipe' + (revealed ? ' swiping' : '')}
-      style={isDragging ? { zIndex: 50 } : undefined}
+      style={{ paddingLeft: indent, ...(isDragging ? { zIndex: 50 } : null) }}
     >
       {revealed && (
         <button
@@ -86,7 +90,7 @@ function NoteItem({ n, onContextMenu, onDelete }) {
         style={style}
         to={`/note/${n.id}`}
         draggable={false}
-        className={({ isActive }) => 'nav-item' + (isActive ? ' active' : '')}
+        className={({ isActive }) => 'nav-item note-item' + (isActive ? ' active' : '')}
         onContextMenu={(e) => onContextMenu(e, n.id)}
         onClick={(e) => { if (open) { e.preventDefault(); setOpen(false); setDx(0) } }}
         {...attributes}
@@ -97,15 +101,76 @@ function NoteItem({ n, onContextMenu, onDelete }) {
       >
         <span className="emoji">{n.emoji || <FileText size={15} />}</span>
         <span className="title">{n.title || 'Sem título'}</span>
+        <span className="nav-actions">
+          <button
+            type="button"
+            className="nav-add"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onAddChild?.(n.id) }}
+            tabIndex={-1}
+            title="Adicionar subpágina"
+          >
+            <Plus size={14} />
+          </button>
+          {hasChildren && (
+            <button
+              type="button"
+              className={'nav-caret' + (collapsed ? '' : ' open')}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleCollapse?.(n.id) }}
+              tabIndex={-1}
+              aria-label={collapsed ? 'Expandir' : 'Recolher'}
+            >
+              <ChevronRight size={14} />
+            </button>
+          )}
+        </span>
       </NavLink>
     </div>
   )
 }
 
-export default function Sidebar({ notes, sharedNotes = [], onNewNote, onDeleteNote, onReorderNotes, onSearch, open, onClose }) {
+export default function Sidebar({ notes, sharedNotes = [], onNewNote, onDeleteNote, onMoveNotes, onAddSubpage, onSearch, open, onClose }) {
   const navigate = useNavigate()
   const [menu, setMenu] = useState(null) // { id, x, y }
   const [confirm, setConfirm] = useState(null) // { id, title }
+
+  // collapse por nota (persistido no localStorage)
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('nova-collapsed') || '[]')) } catch { return new Set() }
+  })
+  const toggleCollapse = (id) =>
+    setCollapsed((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      try { localStorage.setItem('nova-collapsed', JSON.stringify([...next])) } catch {}
+      return next
+    })
+  // botão + do item: cria subpágina e garante que o pai fique expandido
+  const addChild = (id) => {
+    setCollapsed((prev) => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev)
+      next.delete(id)
+      try { localStorage.setItem('nova-collapsed', JSON.stringify([...next])) } catch {}
+      return next
+    })
+    onAddSubpage?.(id)
+  }
+
+  // estado do drag em árvore
+  const [activeId, setActiveId] = useState(null)
+  const [overId, setOverId] = useState(null)
+  const [offsetLeft, setOffsetLeft] = useState(0)
+
+  const flattened = useMemo(() => {
+    const flat = flattenTree(buildTree(notes, collapsed))
+    const collapsedIds = flat.reduce((acc, i) => (i.collapsed && i.children.length ? [...acc, i.id] : acc), [])
+    return removeChildrenOf(flat, activeId != null ? [activeId, ...collapsedIds] : collapsedIds)
+  }, [notes, collapsed, activeId])
+  const sortedIds = useMemo(() => flattened.map((i) => i.id), [flattened])
+  const projected =
+    activeId != null && overId != null ? getProjection(flattened, activeId, overId, offsetLeft, INDENT) : null
 
   // mouse: arrasta após 6px (clique simples navega).
   // toque (iPhone): segura ~220ms pra arrastar; toque rápido navega; rolar cancela.
@@ -119,20 +184,30 @@ export default function Sidebar({ notes, sharedNotes = [], onNewNote, onDeleteNo
     setMenu({ id, x: Math.min(e.clientX, window.innerWidth - 200), y: e.clientY })
   }
 
+  const resetDnd = () => { setActiveId(null); setOverId(null); setOffsetLeft(0) }
+  const onDragStart = ({ active }) => { setActiveId(active.id); setOverId(active.id) }
+  const onDragMove = ({ delta }) => setOffsetLeft(delta.x)
+  const onDragOver = ({ over }) => setOverId(over?.id ?? null)
+  const onDragCancel = () => resetDnd()
+
   const onDragEnd = ({ active, over }) => {
-    // engole o clique que dispara logo após soltar (senão soltar em cima de um
-    // link tipo "Agentes" navega e mostra a tela de carregamento)
-    const swallow = (ev) => {
-      ev.preventDefault()
-      ev.stopPropagation()
-    }
+    // engole o clique pós-drop (senão soltar em cima de um link navega/carrega)
+    const swallow = (ev) => { ev.preventDefault(); ev.stopPropagation() }
     document.addEventListener('click', swallow, { capture: true, once: true })
     setTimeout(() => document.removeEventListener('click', swallow, true), 320)
 
-    if (!over || active.id === over.id) return
-    const oldI = notes.findIndex((n) => n.id === active.id)
-    const newI = notes.findIndex((n) => n.id === over.id)
-    onReorderNotes?.(arrayMove(notes, oldI, newI).map((n) => n.id))
+    const proj = projected
+    resetDnd()
+    if (!over || !proj) return
+    const clone = [...flattened]
+    const activeIndex = clone.findIndex((i) => i.id === active.id)
+    const overIndex = clone.findIndex((i) => i.id === over.id)
+    if (activeIndex < 0 || overIndex < 0) return
+    clone[activeIndex] = { ...clone[activeIndex], parentId: proj.parentId, depth: proj.depth }
+    const ordered = arrayMove(clone, activeIndex, overIndex)
+    // posição = índice global (buildTree ordena filhos por position, e a ordem
+    // global já respeita a ordem visual dentro de cada pai)
+    onMoveNotes?.(ordered.map((i, idx) => ({ id: i.id, parent_id: i.parentId ?? null, position: idx })))
   }
 
   return (
@@ -163,12 +238,26 @@ export default function Sidebar({ notes, sharedNotes = [], onNewNote, onDeleteNo
         </NavLink>
 
         <div className="nav-section">Notas</div>
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-          <SortableContext items={notes.map((n) => n.id)} strategy={verticalListSortingStrategy}>
-            {notes.map((n) => (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={onDragStart}
+          onDragMove={onDragMove}
+          onDragOver={onDragOver}
+          onDragEnd={onDragEnd}
+          onDragCancel={onDragCancel}
+        >
+          <SortableContext items={sortedIds} strategy={verticalListSortingStrategy}>
+            {flattened.map((item) => (
               <NoteItem
-                key={n.id}
-                n={n}
+                key={item.id}
+                n={item}
+                depth={item.depth}
+                ghostDepth={activeId === item.id && projected ? projected.depth : null}
+                hasChildren={(item.children?.length || 0) > 0}
+                collapsed={collapsed.has(item.id)}
+                onToggleCollapse={toggleCollapse}
+                onAddChild={addChild}
                 onContextMenu={openMenu}
                 onDelete={(note) => setConfirm({ id: note.id, title: note.title || 'Sem título' })}
               />

@@ -158,6 +158,46 @@
   text-align: center;
   font-size: 14px;
 }
+/* ações à direita do item: + (adicionar subpágina) e chevron de collapse */
+.nav-actions {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  margin-left: 4px;
+}
+.nav-add,
+.nav-caret {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  color: var(--text-faint);
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease,
+    opacity 0.18s ease;
+}
+/* + aparece só no hover do item (fade-in) */
+.nav-add {
+  opacity: 0;
+}
+.nav-item:hover .nav-add,
+.nav-item.active .nav-add {
+  opacity: 1;
+}
+.nav-add:hover,
+.nav-caret:hover {
+  color: var(--accent);
+  background: var(--surface-hover);
+}
+.nav-caret.open {
+  transform: rotate(90deg);
+}
 .nav-item .title {
   flex: 1;
   overflow: hidden;

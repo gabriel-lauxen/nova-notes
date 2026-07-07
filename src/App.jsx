@@ -116,10 +116,35 @@ export default function App() {
     return () => clearTimeout(t)
   }, [])
 
+  // nota "fantasma" pra UI otimista (aparece na sidebar antes do banco responder)
+  const optimisticNote = (id, extra = {}) => ({
+    id, title: 'Sem título', content: '', emoji: '📄', tags: [],
+    is_goal: false, is_agent: false, progress: 0, done: false, position: 0, parent_id: null,
+    created_at: new Date().toISOString(), updated_at: new Date().toISOString(), ...extra,
+  })
+
   const handleNewNote = useCallback(async () => {
-    const note = await notesApi.create()
-    await refresh()
-    navigate(`/note/${note.id}`)
+    const id = (crypto.randomUUID && crypto.randomUUID()) || String(Date.now())
+    setNotes((prev) => [...prev, optimisticNote(id)]) // aparece na sidebar já
+    try { await notesApi.create({ id }) } catch {}
+    navigate(`/note/${id}`)
+    refresh()
+  }, [navigate, refresh])
+
+  // botão + do item da sidebar: cria subpágina aninhada e anexa um link "page"
+  // no fim do conteúdo da nota-pai
+  const handleAddSubpage = useCallback(async (parentId) => {
+    const id = (crypto.randomUUID && crypto.randomUUID()) || String(Date.now())
+    // aparece na sidebar já aninhada (feedback imediato -> evita clicar 2x)
+    setNotes((prev) => [...prev, optimisticNote(id, { parent_id: parentId, title: 'Nova subpágina' })])
+    try {
+      await notesApi.create({ id, parent_id: parentId, title: 'Nova subpágina' })
+      const parent = await notesApi.get(parentId)
+      const base = (parent?.content || '').replace(/\s*$/, '')
+      await notesApi.update(parentId, { content: base + `\n\n[Nova subpágina](/note/${id})\n` })
+    } catch {}
+    navigate(`/note/${id}`)
+    refresh()
   }, [navigate, refresh])
 
   const handleDeleted = useCallback(async () => {
@@ -138,10 +163,24 @@ export default function App() {
     () => [...notes].sort((a, b) => (a.position ?? 0) - (b.position ?? 0) || (a.updated_at < b.updated_at ? 1 : -1)),
     [notes],
   )
-  const handleReorderNotes = useCallback(async (ids) => {
-    setNotes((prev) => ids.map((id, i) => ({ ...prev.find((n) => n.id === id), position: i })))
-    await Promise.all(ids.map((id, i) => notesApi.update(id, { position: i })))
-  }, [])
+  // mover/aninhar notas na árvore: updates = [{ id, parent_id, position }]
+  const handleMoveNotes = useCallback(async (updates) => {
+    const prevById = new Map(notes.map((n) => [n.id, n]))
+    const changed = updates.filter((u) => {
+      const p = prevById.get(u.id)
+      return p && (p.position !== u.position || (p.parent_id ?? null) !== (u.parent_id ?? null))
+    })
+    if (!changed.length) return
+    setNotes((prev) => {
+      const byId = new Map(prev.map((n) => [n.id, n]))
+      for (const u of changed) {
+        const n = byId.get(u.id)
+        if (n) byId.set(u.id, { ...n, parent_id: u.parent_id ?? null, position: u.position })
+      }
+      return [...byId.values()]
+    })
+    await Promise.all(changed.map((u) => notesApi.update(u.id, { parent_id: u.parent_id ?? null, position: u.position })))
+  }, [notes])
 
   if (isSupabaseConfigured && authLoading) return <Loader />
   if (needsAuth) return <Login />
@@ -151,7 +190,7 @@ export default function App() {
       {booting && <Loader />}
       {cmdk && <CommandPalette notes={notes} onNewNote={handleNewNote} onClose={() => setCmdk(false)} />}
       <button className="burger" onClick={() => setNavOpen(true)} aria-label="Abrir menu"><Menu size={26} /></button>
-      <Sidebar notes={sortedNotes} sharedNotes={sharedNotes} onNewNote={handleNewNote} onDeleteNote={handleDeleteNote} onReorderNotes={handleReorderNotes} onSearch={() => setCmdk(true)} open={navOpen} onClose={() => setNavOpen(false)} />
+      <Sidebar notes={sortedNotes} sharedNotes={sharedNotes} onNewNote={handleNewNote} onDeleteNote={handleDeleteNote} onMoveNotes={handleMoveNotes} onAddSubpage={handleAddSubpage} onSearch={() => setCmdk(true)} open={navOpen} onClose={() => setNavOpen(false)} />
       <div className="main">
         <Starfield />
         {!isSupabaseConfigured && (

@@ -26,6 +26,7 @@ import { Collapsible } from './Collapsible'
 import { SmartDropcursor } from './SmartDropcursor'
 import { NovaImage } from './NovaImage'
 import { Reminder } from './Reminder'
+import BlockHandleMenu from './BlockHandleMenu'
 
 // Garante sempre um parágrafo vazio no fim do documento, pra dar pra clicar
 // abaixo de blocos (tabela, código, toggle…) e digitar uma nova linha.
@@ -399,10 +400,53 @@ export default function Editor({ content, onChange, onEditor, editable = true })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content, editor])
 
+  // clique rápido no drag handle -> menu do bloco; arraste -> reordena.
+  // também esconde o handle de forma robusta (ele ficava "preso" sobre outras notas).
+  useEffect(() => {
+    if (!editor) return
+    const el = document.getElementById('nova-drag-handle')
+    if (!el) return
+    let dragged = false
+    const onDragStart = () => { dragged = true }
+    const onDragEnd = () => { setTimeout(() => { dragged = false }, 60) }
+    const onClick = (e) => {
+      if (dragged) return // foi arraste, não clique
+      e.preventDefault()
+      e.stopPropagation()
+      const rect = el.getBoundingClientRect()
+      const info = editor.view.posAtCoords({ left: rect.right + 24, top: rect.top + rect.height / 2 })
+      if (!info) return
+      const size = editor.state.doc.content.size
+      const $pos = editor.state.doc.resolve(Math.max(0, Math.min(info.pos, size)))
+      const blockPos = $pos.depth >= 1 ? $pos.before(1) : info.pos
+      window.dispatchEvent(new CustomEvent('nova:block-menu', { detail: { pos: blockPos, x: rect.left, y: rect.bottom + 4 } }))
+    }
+    const onDocMove = (ev) => {
+      if (el.classList.contains('hide')) return
+      const ed = editor.view.dom.getBoundingClientRect()
+      const h = el.getBoundingClientRect()
+      const inEd = ev.clientX >= ed.left - 44 && ev.clientX <= ed.right + 12 && ev.clientY >= ed.top && ev.clientY <= ed.bottom
+      const inH = ev.clientX >= h.left - 6 && ev.clientX <= h.right + 6 && ev.clientY >= h.top - 6 && ev.clientY <= h.bottom + 6
+      if (!inEd && !inH) el.classList.add('hide')
+    }
+    el.addEventListener('dragstart', onDragStart)
+    el.addEventListener('dragend', onDragEnd)
+    el.addEventListener('click', onClick)
+    document.addEventListener('mousemove', onDocMove)
+    return () => {
+      el.removeEventListener('dragstart', onDragStart)
+      el.removeEventListener('dragend', onDragEnd)
+      el.removeEventListener('click', onClick)
+      document.removeEventListener('mousemove', onDocMove)
+      el.classList.add('hide') // ao trocar de nota/desmontar, some o handle
+    }
+  }, [editor])
+
   return (
     <>
       <EditorContent editor={editor} />
       {editor && <BubbleToolbar editor={editor} />}
+      {editor && <BlockHandleMenu editor={editor} />}
     </>
   )
 }

@@ -549,6 +549,13 @@
   position: relative;
   text-shadow: 0 2px 26px var(--bg);
 }
+/* glow suave na cor do tema no título da Home (mantém a profundidade) */
+.home-title {
+  text-shadow:
+    0 0 32px color-mix(in srgb, var(--accent) 38%, transparent),
+    0 0 10px color-mix(in srgb, var(--accent) 22%, transparent),
+    0 2px 26px var(--bg);
+}
 /* profundidade: subtítulo atrás do ícone, "boa noite"/título na frente */
 .home-sub {
   z-index: 1;

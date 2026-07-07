@@ -50,11 +50,12 @@
   font-size: 13.5px;
   line-height: 1.55;
   color: var(--text-dim);
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  -webkit-box-orient: vertical;
+  /* line-clamp não segura conteúdo de bloco (código, checkboxes) — usa
+     max-height (~5 linhas) + fade pra nunca estourar o card */
+  max-height: 7.75em;
   overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
 }
 .goal-desc > * + * {
   margin-top: 0.5em;

@@ -36,3 +36,20 @@
   }
 }
 
+
+/* menu que abre ao clicar no drag handle do bloco */
+.block-menu {
+  min-width: 174px;
+}
+.block-menu-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-faint);
+  padding: 7px 11px 4px;
+}
+.block-menu-sep {
+  height: 1px;
+  background: var(--border);
+  margin: 5px 6px;
+}

@@ -26,6 +26,12 @@ const ITEMS = [
       c.run() // apaga o "/lembrete"
       window.dispatchEvent(new CustomEvent('nova:add-reminder'))
     } },
+  { title: 'Página', subtitle: 'Cria uma subpágina aninhada aqui', icon: '📄',
+    keywords: 'pagina page subpagina subpage nota filho aninhar notion hierarquia',
+    run: (c) => {
+      c.run() // apaga o "/page"
+      window.dispatchEvent(new CustomEvent('nova:add-subpage'))
+    } },
   { title: 'Citação', subtitle: 'Bloco de citação', icon: '❝', keywords: 'citacao quote blockquote',
     run: (c) => c.toggleBlockquote().run() },
   { title: 'Código', subtitle: 'Bloco de código', icon: '</>', keywords: 'codigo code pre',

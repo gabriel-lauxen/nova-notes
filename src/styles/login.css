@@ -33,42 +33,60 @@
   font-size: 26px;
   letter-spacing: 0.5px;
 }
-/* efeito glitch/chromatic no título "hero" (como no design) */
+/* glitch no título "hero" (login + Home): NORMAL a maior parte do tempo,
+   com piscadinhas curtas de RGB-split desalinhado. Não sobrescreve a cor/
+   sombra do título — só sobrepõe os flickers. */
 .glitch {
   position: relative;
-  color: var(--text);
-  text-shadow: 0 0 20px color-mix(in srgb, var(--accent) 55%, transparent);
+  /* glow na cor do tema + mantém a profundidade escura na Home */
+  text-shadow:
+    0 0 24px color-mix(in srgb, var(--accent) 62%, transparent),
+    0 0 5px color-mix(in srgb, var(--accent) 42%, transparent),
+    0 2px 26px var(--bg);
 }
 .glitch::before,
 .glitch::after {
   content: attr(data-text);
   position: absolute;
-  inset: 0;
+  left: 0;
+  top: 0;
+  width: 100%;
   pointer-events: none;
-  opacity: 0.85;
+  opacity: 0;
+  mix-blend-mode: screen;
 }
 .glitch::before {
-  color: #37e0f2;
-  mix-blend-mode: screen;
-  animation: glitch-a 3.6s infinite steps(1);
+  color: #22e3f7;
+  animation: glitch-a 5.5s infinite;
 }
 .glitch::after {
-  color: #a9c7ff;
-  mix-blend-mode: screen;
-  animation: glitch-b 4.2s infinite steps(1);
+  color: #7b8cff;
+  animation: glitch-b 5.5s infinite;
 }
 @keyframes glitch-a {
-  0%, 90%, 100% { transform: translate(0, 0); }
-  91% { transform: translate(-2px, -1px); }
-  93% { transform: translate(2px, 1px); }
-  95% { transform: translate(-1px, 1px); }
-  97% { transform: translate(1px, -1px); }
+  0%, 7%, 100% { opacity: 0; transform: translate(0, 0); }
+  7.5% { opacity: 0.9; transform: translate(-3px, -1px); clip-path: inset(12% 0 55% 0); }
+  8.5% { opacity: 0.9; transform: translate(2px, 1px); clip-path: inset(58% 0 12% 0); }
+  9% { opacity: 0; transform: translate(0, 0); }
+  46% { opacity: 0; }
+  46.5% { opacity: 0.85; transform: translate(-2px, 1px); clip-path: inset(35% 0 40% 0); }
+  47.5% { opacity: 0; }
+  80% { opacity: 0; }
+  80.5% { opacity: 0.9; transform: translate(3px, -1px); clip-path: inset(20% 0 55% 0); }
+  81.5% { opacity: 0.9; transform: translate(-2px, 0); clip-path: inset(62% 0 10% 0); }
+  82% { opacity: 0; }
 }
 @keyframes glitch-b {
-  0%, 88%, 100% { transform: translate(0, 0); }
-  89% { transform: translate(2px, 1px); }
-  92% { transform: translate(-2px, 0); }
-  96% { transform: translate(1px, -1px); }
+  0%, 7%, 100% { opacity: 0; transform: translate(0, 0); }
+  7.5% { opacity: 0.85; transform: translate(3px, 1px); clip-path: inset(50% 0 22% 0); }
+  8.5% { opacity: 0.85; transform: translate(-2px, -1px); clip-path: inset(18% 0 52% 0); }
+  9% { opacity: 0; }
+  46% { opacity: 0; }
+  46.5% { opacity: 0.8; transform: translate(2px, -1px); clip-path: inset(45% 0 30% 0); }
+  47.5% { opacity: 0; }
+  80% { opacity: 0; }
+  80.5% { opacity: 0.85; transform: translate(-3px, 1px); clip-path: inset(55% 0 20% 0); }
+  81.5% { opacity: 0; }
 }
 .auth-sub {
   text-align: center;
