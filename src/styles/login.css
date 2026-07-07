@@ -22,24 +22,53 @@
     0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 .auth-logo {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
   align-self: center;
-  display: grid;
-  place-items: center;
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 22px;
-  background: linear-gradient(140deg, var(--accent), var(--accent-strong));
-  color: var(--accent-contrast);
-  box-shadow: 0 4px 16px var(--accent-glow);
+  display: block;
+  color: var(--accent);
+  filter: drop-shadow(0 0 12px var(--accent-glow));
 }
 .auth-title {
   text-align: center;
   font-weight: 700;
-  font-size: 22px;
-  letter-spacing: 3px;
+  font-size: 26px;
+  letter-spacing: 0.5px;
+}
+/* efeito glitch/chromatic no título "hero" (como no design) */
+.glitch {
+  position: relative;
+  color: var(--text);
+  text-shadow: 0 0 20px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.85;
+}
+.glitch::before {
+  color: #37e0f2;
+  mix-blend-mode: screen;
+  animation: glitch-a 3.6s infinite steps(1);
+}
+.glitch::after {
+  color: #a9c7ff;
+  mix-blend-mode: screen;
+  animation: glitch-b 4.2s infinite steps(1);
+}
+@keyframes glitch-a {
+  0%, 90%, 100% { transform: translate(0, 0); }
+  91% { transform: translate(-2px, -1px); }
+  93% { transform: translate(2px, 1px); }
+  95% { transform: translate(-1px, 1px); }
+  97% { transform: translate(1px, -1px); }
+}
+@keyframes glitch-b {
+  0%, 88%, 100% { transform: translate(0, 0); }
+  89% { transform: translate(2px, 1px); }
+  92% { transform: translate(-2px, 0); }
+  96% { transform: translate(1px, -1px); }
 }
 .auth-sub {
   text-align: center;

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import PinwheelIcon from './PinwheelIcon'
 
 export default function Login() {
   const { signIn, signUp } = useAuth()
@@ -33,8 +34,8 @@ export default function Login() {
   return (
     <div className="auth">
       <form className="auth-card" onSubmit={submit}>
-        <div className="auth-logo">N</div>
-        <div className="auth-title">NOVA</div>
+        <PinwheelIcon className="auth-logo" size={48} />
+        <div className="auth-title glitch" data-text="Nova notes">Nova notes</div>
         <div className="auth-sub">{mode === 'in' ? 'Entre na sua conta' : 'Crie sua conta'}</div>
 
         {mode === 'up' && (

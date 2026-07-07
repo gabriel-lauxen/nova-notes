@@ -78,6 +78,8 @@
 }
 .reminder-sum {
   opacity: 0.85;
+  font-family: var(--font-mono);
+  letter-spacing: 0.2px;
 }
 
 /* modal de configuração do lembrete */
@@ -110,6 +112,7 @@
   display: flex;
   flex-direction: column;
   gap: 7px;
+  min-width: 0;
 }
 .rem-field > span {
   font-size: 12.5px;
@@ -117,4 +120,15 @@
 }
 .rem-field .field {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+/* inputs nativos de data/hora/número no mobile não encolhem sozinhos e
+   estouram o modal — força o controle do tamanho */
+.rem-field input[type="datetime-local"],
+.rem-field input[type="time"],
+.rem-field input[type="number"] {
+  -webkit-appearance: none;
+  appearance: none;
 }

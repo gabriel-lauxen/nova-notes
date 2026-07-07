@@ -8,6 +8,7 @@ import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } 
 import { CSS } from '@dnd-kit/utilities'
 import { Home, Target, CalendarCheck, Settings, Plus, FileText, Trash2, Bot, Search } from 'lucide-react'
 import ConfirmDialog from './ConfirmDialog'
+import PinwheelIcon from './PinwheelIcon'
 
 function NoteItem({ n, onContextMenu, onDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: n.id })
@@ -119,6 +120,15 @@ export default function Sidebar({ notes, sharedNotes = [], onNewNote, onDeleteNo
   }
 
   const onDragEnd = ({ active, over }) => {
+    // engole o clique que dispara logo após soltar (senão soltar em cima de um
+    // link tipo "Agentes" navega e mostra a tela de carregamento)
+    const swallow = (ev) => {
+      ev.preventDefault()
+      ev.stopPropagation()
+    }
+    document.addEventListener('click', swallow, { capture: true, once: true })
+    setTimeout(() => document.removeEventListener('click', swallow, true), 320)
+
     if (!over || active.id === over.id) return
     const oldI = notes.findIndex((n) => n.id === active.id)
     const newI = notes.findIndex((n) => n.id === over.id)
@@ -130,8 +140,8 @@ export default function Sidebar({ notes, sharedNotes = [], onNewNote, onDeleteNo
       {open && <div className="nav-backdrop" onClick={onClose} />}
       <aside className={'sidebar' + (open ? ' open' : '')}>
         <div className="brand">
-          <span className="logo">N</span>
-          <span className="brand-name">NOVA</span>
+          <PinwheelIcon className="logo" size={28} />
+          <span className="brand-name">Nova notes</span>
         </div>
 
         <button type="button" className="nav-item nav-search" onClick={onSearch}>

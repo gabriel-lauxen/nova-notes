@@ -35,11 +35,9 @@
   animation: spin 0.85s linear infinite;
 }
 .loader-logo {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 24px;
   color: var(--accent);
-  text-shadow: 0 0 12px var(--accent-glow);
+  filter: drop-shadow(0 0 10px var(--accent-glow));
+  animation: spin 3.4s linear infinite;
 }
 .loader-text {
   font-family: var(--font-mono);
